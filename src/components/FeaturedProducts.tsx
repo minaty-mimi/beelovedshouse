@@ -1,77 +1,10 @@
 import React, { useState } from 'react';
 import ProductCard from './ProductCard';
+import { useAppContext } from '@/contexts/AppContext';
 
 const FeaturedProducts: React.FC = () => {
+  const { products } = useAppContext();
   const [activeFilter, setActiveFilter] = useState('all');
-
-  const products = [
-    {
-      id: 1,
-      title: "My Shepherd Dreams Wallpaper Pack",
-      price: 4.99,
-      originalPrice: 7.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204871871_6f7f2a46.webp",
-      category: "Wallpapers",
-      type: "digital" as const
-    },
-    {
-      id: 2,
-      title: "Adventures with My Shepherd - Storybook",
-      price: 12.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204880705_c66dab7a.webp",
-      category: "Books",
-      type: "physical" as const
-    },
-    {
-      id: 3,
-      title: "Shepherd's Journey Tote Bag",
-      price: 18.99,
-      originalPrice: 24.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204888876_25a39d61.webp",
-      category: "Tote Bags",
-      type: "physical" as const
-    },
-    {
-      id: 4,
-      title: "Cute Shepherd Sticker Set",
-      price: 6.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204894049_1eb729fd.webp",
-      category: "Stickers",
-      type: "physical" as const
-    },
-    {
-      id: 5,
-      title: "Peaceful Pastures Wallpaper",
-      price: 2.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204874325_9dcbc450.webp",
-      category: "Wallpapers",
-      type: "digital" as const
-    },
-    {
-      id: 6,
-      title: "My Shepherd Card Game",
-      price: 15.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204899458_c7f4d3e6.webp",
-      category: "Card Games",
-      type: "physical" as const
-    },
-    {
-      id: 7,
-      title: "Shepherd's Coloring Adventure",
-      price: 8.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204904519_125d5d7b.webp",
-      category: "Books",
-      type: "physical" as const
-    },
-    {
-      id: 8,
-      title: "Heavenly Fields Wallpaper Set",
-      price: 3.99,
-      image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204876206_b3ab168d.webp",
-      category: "Wallpapers",
-      type: "digital" as const
-    }
-  ];
 
   const filters = [
     { id: 'all', label: 'All Products' },

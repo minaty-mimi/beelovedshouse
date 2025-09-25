@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
-import { Heart, ShoppingBag, Menu, X, Search, User } from 'lucide-react';
+import { Heart, ShoppingBag, Menu, X, Search, User, LogOut } from 'lucide-react';
+import { useAppContext } from '@/contexts/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { Button } from './ui/button';
+import SearchModal from './SearchModal';
 
 const Header: React.FC = () => {
+  const { wishlist, cartItemCount, user, signOut } = useAppContext();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [wishlistCount] = useState(3);
-  const [cartCount] = useState(2);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const handleAuth = () => {
+    if (user) {
+      navigate('/profile');
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <header className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
@@ -28,24 +41,41 @@ const Header: React.FC = () => {
 
           {/* Actions */}
           <div className="flex items-center space-x-4">
-            <Search className="w-5 h-5 text-gray-600 hover:text-amber-600 cursor-pointer transition-colors" />
+            <Search
+              className="w-5 h-5 text-gray-600 hover:text-amber-600 cursor-pointer transition-colors"
+              onClick={() => setIsSearchOpen(true)}
+            />
             <div className="relative">
-              <Heart className="w-5 h-5 text-gray-600 hover:text-pink-500 cursor-pointer transition-colors" />
-              {wishlistCount > 0 && (
+              <Heart 
+                className="w-5 h-5 text-gray-600 hover:text-pink-500 cursor-pointer transition-colors" 
+                onClick={() => navigate('/liked')}
+              />
+              {wishlist.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {wishlistCount}
+                  {wishlist.length}
                 </span>
               )}
             </div>
             <div className="relative">
-              <ShoppingBag className="w-5 h-5 text-gray-600 hover:text-amber-600 cursor-pointer transition-colors" />
-              {cartCount > 0 && (
+              <ShoppingBag 
+                className="w-5 h-5 text-gray-600 hover:text-amber-600 cursor-pointer transition-colors"
+                onClick={() => navigate('/cart')}
+              />
+              {cartItemCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartCount}
+                  {cartItemCount}
                 </span>
               )}
             </div>
-            <User className="w-5 h-5 text-gray-600 hover:text-amber-600 cursor-pointer transition-colors" />
+            <div className="relative">
+              <User 
+                className="w-5 h-5 text-gray-600 hover:text-amber-600 cursor-pointer transition-colors"
+                onClick={handleAuth}
+              />
+              {user && (
+                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full w-2 h-2"></span>
+              )}
+            </div>
             
             {/* Mobile menu button */}
             <button
@@ -70,6 +100,9 @@ const Header: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Search Modal */}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   );
 };

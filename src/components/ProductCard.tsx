@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, ShoppingBag, Eye, Download } from 'lucide-react';
+import { useAppContext } from '@/contexts/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 interface ProductCardProps {
   id: number;
@@ -9,7 +11,6 @@ interface ProductCardProps {
   image: string;
   category: string;
   type: 'digital' | 'physical';
-  isWishlisted?: boolean;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -19,21 +20,38 @@ const ProductCard: React.FC<ProductCardProps> = ({
   originalPrice,
   image,
   category,
-  type,
-  isWishlisted = false
+  type
 }) => {
-  const [wishlisted, setWishlisted] = useState(isWishlisted);
+  const { isInWishlist, addToWishlist, removeFromWishlist, addToCart } = useAppContext();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleWishlist = () => {
-    setWishlisted(!wishlisted);
+  const wishlisted = isInWishlist(id);
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (wishlisted) {
+      removeFromWishlist(id);
+    } else {
+      addToWishlist(id);
+    }
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(id, 1);
+  };
+
+  const handleViewDetails = () => {
+    navigate(`/product/${id}`);
   };
 
   return (
     <div 
-      className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
+      className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleViewDetails}
     >
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden">
@@ -67,10 +85,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Hover Actions */}
         {isHovered && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-all duration-300">
-            <button className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleViewDetails(); }}
+              className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+            >
               <Eye className="w-5 h-5 text-gray-700" />
             </button>
-            <button className="p-3 bg-amber-500 text-white rounded-full shadow-lg hover:bg-amber-600 transition-colors">
+            <button
+              onClick={handleAddToCart}
+              className="p-3 bg-amber-500 text-white rounded-full shadow-lg hover:bg-amber-600 transition-colors"
+            >
               {type === 'digital' ? (
                 <Download className="w-5 h-5" />
               ) : (
