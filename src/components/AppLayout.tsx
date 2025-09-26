@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useAppContext } from '@/contexts/AppContext';
-import { useIsMobile } from '@/hooks/use-mobile';
+import React from 'react';
 import Header from './Header';
 import Hero from './Hero';
 import FeaturedProducts from './FeaturedProducts';
@@ -10,19 +8,6 @@ import ContactSection from './ContactSection';
 import Footer from './Footer';
 
 const AppLayout: React.FC = () => {
-  const { sidebarOpen, toggleSidebar } = useAppContext();
-  const isMobile = useIsMobile();
-  const [showNewsletterPopup, setShowNewsletterPopup] = useState(false);
-
-  // Show newsletter popup after 10 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowNewsletterPopup(true);
-    }, 10000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -36,14 +21,6 @@ const AppLayout: React.FC = () => {
       </main>
 
       <Footer />
-
-      {/* Newsletter Popup */}
-      {showNewsletterPopup && (
-        <NewsletterSignup 
-          isPopup={true} 
-          onClose={() => setShowNewsletterPopup(false)} 
-        />
-      )}
     </div>
   );
 };

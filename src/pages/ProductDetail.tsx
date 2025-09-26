@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Download, ArrowLeft, Star, Share2, Eye } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
+import { trackProductView, trackAddToCart, trackEvent } from '@/utils/analytics';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,13 @@ const ProductDetail: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const product = products.find(p => p.id === parseInt(id || '0'));
+
+  // Track product view
+  useEffect(() => {
+    if (product) {
+      trackProductView(product);
+    }
+  }, [product]);
 
   if (!product) {
     return (
@@ -35,12 +43,15 @@ const ProductDetail: React.FC = () => {
   const handleWishlist = () => {
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
+      trackEvent('remove_from_wishlist', 'engagement', product.title);
     } else {
       addToWishlist(product.id);
+      trackEvent('add_to_wishlist', 'engagement', product.title);
     }
   };
 
   const handleAddToCart = () => {
+    trackAddToCart(product, quantity);
     toast({
       title: "Added to cart",
       description: `${product.title} has been added to your cart.`,

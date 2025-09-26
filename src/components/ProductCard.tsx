@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Heart, ShoppingBag, Eye, Download } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { trackAddToCart, trackEvent } from '@/utils/analytics';
 
 interface ProductCardProps {
   id: number;
@@ -32,14 +33,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.stopPropagation();
     if (wishlisted) {
       removeFromWishlist(id);
+      trackEvent('remove_from_wishlist', 'engagement', title);
     } else {
       addToWishlist(id);
+      trackEvent('add_to_wishlist', 'engagement', title);
     }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(id, 1);
+    trackAddToCart({ id, title, category, price }, 1);
   };
 
   const handleViewDetails = () => {
@@ -58,6 +62,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <img 
           src={image} 
           alt={title}
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
         />
         

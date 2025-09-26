@@ -6,12 +6,6 @@ const Hero: React.FC = () => {
     <section 
       id="home"
       className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 overflow-hidden"
-      style={{
-        backgroundImage: `url('https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204867805_f1bddd4f.webp')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundBlendMode: 'overlay'
-      }}
     >
       {/* Floating Elements */}
       <div className="absolute inset-0 pointer-events-none">

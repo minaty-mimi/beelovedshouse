@@ -32,11 +32,11 @@ const Header: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#home" className="text-gray-700 hover:text-amber-600 transition-colors">Home</a>
-            <a href="#shop" className="text-gray-700 hover:text-amber-600 transition-colors">Shop</a>
-            <a href="#about" className="text-gray-700 hover:text-amber-600 transition-colors">About</a>
-            <a href="#freebies" className="text-gray-700 hover:text-amber-600 transition-colors">Freebies</a>
-            <a href="#contact" className="text-gray-700 hover:text-amber-600 transition-colors">Contact</a>
+            <button onClick={() => navigate('/')} className="text-gray-700 hover:text-amber-600 transition-colors">Home</button>
+            <button onClick={() => navigate('/products')} className="text-gray-700 hover:text-amber-600 transition-colors">Shop</button>
+            <button onClick={() => navigate('/about-us')} className="text-gray-700 hover:text-amber-600 transition-colors">About</button>
+            <button onClick={() => navigate('/digital-downloads')} className="text-gray-700 hover:text-amber-600 transition-colors">Freebies</button>
+            <button onClick={() => navigate('/contact-us')} className="text-gray-700 hover:text-amber-600 transition-colors">Contact</button>
           </nav>
 
           {/* Actions */}
@@ -91,11 +91,11 @@ const Header: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
             <nav className="flex flex-col space-y-4">
-              <a href="#home" className="text-gray-700 hover:text-amber-600 transition-colors">Home</a>
-              <a href="#shop" className="text-gray-700 hover:text-amber-600 transition-colors">Shop</a>
-              <a href="#about" className="text-gray-700 hover:text-amber-600 transition-colors">About</a>
-              <a href="#freebies" className="text-gray-700 hover:text-amber-600 transition-colors">Freebies</a>
-              <a href="#contact" className="text-gray-700 hover:text-amber-600 transition-colors">Contact</a>
+              <button onClick={() => { navigate('/'); setIsMenuOpen(false); }} className="text-gray-700 hover:text-amber-600 transition-colors text-left">Home</button>
+              <button onClick={() => { navigate('/products'); setIsMenuOpen(false); }} className="text-gray-700 hover:text-amber-600 transition-colors text-left">Shop</button>
+              <button onClick={() => { navigate('/about-us'); setIsMenuOpen(false); }} className="text-gray-700 hover:text-amber-600 transition-colors text-left">About</button>
+              <button onClick={() => { navigate('/digital-downloads'); setIsMenuOpen(false); }} className="text-gray-700 hover:text-amber-600 transition-colors text-left">Freebies</button>
+              <button onClick={() => { navigate('/contact-us'); setIsMenuOpen(false); }} className="text-gray-700 hover:text-amber-600 transition-colors text-left">Contact</button>
             </nav>
           </div>
         )}

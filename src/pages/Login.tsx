@@ -1,22 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAppContext } from '../contexts/AppContext';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Loader2 } from 'lucide-react';
 
 const Login: React.FC = () => {
-  const { signIn, signUp, loading } = useAppContext();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: ''
   });
+
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -25,137 +16,286 @@ const Login: React.FC = () => {
     });
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    const { error } = await signIn(formData.email, formData.password);
-
-    setIsLoading(false);
-    if (!error) {
-      navigate('/');
-    }
+    alert('Sign in successful! (Demo only)');
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match');
       return;
     }
-
-    setIsLoading(true);
-    const { error } = await signUp(formData.email, formData.password);
-
-    setIsLoading(false);
-    if (!error) {
-      navigate('/');
-    }
+    alert('Account created successfully! (Demo only)');
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-16 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-md mx-auto">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome to Beelovedshouse</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f9fafb',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '1rem'
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '400px'
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '0.5rem',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          padding: '2rem'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h1 style={{
+              fontSize: '1.875rem',
+              fontWeight: 'bold',
+              color: '#111827',
+              marginBottom: '0.5rem'
+            }}>
+              Welcome
+            </h1>
+            <p style={{ color: '#6b7280' }}>
+              Sign in to your account or create a new one
+            </p>
+          </div>
 
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div>
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Sign In
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div>
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input
-                      id="confirm-password"
-                      name="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Sign Up
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-
-            <div className="mt-6 text-center">
-              <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
-                ← Back to Home
-              </Link>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{
+              display: 'flex',
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <button
+                onClick={() => setActiveTab('signin')}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  backgroundColor: activeTab === 'signin' ? 'white' : '#f9fafb',
+                  borderBottom: activeTab === 'signin' ? '2px solid #3b82f6' : 'none',
+                  color: activeTab === 'signin' ? '#3b82f6' : '#6b7280',
+                  fontWeight: activeTab === 'signin' ? '600' : '500',
+                  cursor: 'pointer',
+                  border: 'none',
+                  outline: 'none'
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => setActiveTab('signup')}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  backgroundColor: activeTab === 'signup' ? 'white' : '#f9fafb',
+                  borderBottom: activeTab === 'signup' ? '2px solid #3b82f6' : 'none',
+                  color: activeTab === 'signup' ? '#3b82f6' : '#6b7280',
+                  fontWeight: activeTab === 'signup' ? '600' : '500',
+                  cursor: 'pointer',
+                  border: 'none',
+                  outline: 'none'
+                }}
+              >
+                Sign Up
+              </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          {activeTab === 'signin' ? (
+            <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Enter your password"
+                />
+              </div>
+              <button
+                type="submit"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                Sign In
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Create a password"
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Confirm your password"
+                />
+              </div>
+              <button
+                type="submit"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                Create Account
+              </button>
+            </form>
+          )}
+
+          <div style={{
+            textAlign: 'center',
+            marginTop: '1.5rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid #e5e7eb'
+          }}>
+            <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+              Demo login page - No real authentication required
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

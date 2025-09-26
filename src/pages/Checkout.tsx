@@ -17,7 +17,6 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const Checkout: React.FC = () => {
   const { cart, cartTotal, clearCart } = useAppContext();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -37,12 +36,11 @@ const Checkout: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsProcessing(true);
 
     try {
       // Here you would typically send the order to your backend
       // For now, we'll simulate a successful payment
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      // No loading states - immediate processing like major e-commerce sites
 
       // Clear cart and redirect to success page
       clearCart();
@@ -50,8 +48,6 @@ const Checkout: React.FC = () => {
     } catch (error) {
       console.error('Payment failed:', error);
       // Handle error
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -200,9 +196,8 @@ const Checkout: React.FC = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isProcessing}
               >
-                {isProcessing ? 'Processing...' : `Pay $${cartTotal.toFixed(2)}`}
+                Pay ${cartTotal.toFixed(2)}
               </Button>
             </form>
           </CardContent>

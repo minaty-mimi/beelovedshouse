@@ -1,7 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { createContext, useContext, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { supabase, auth } from '@/lib/supabase';
 
 export interface Product {
   id: number;
@@ -11,6 +9,8 @@ export interface Product {
   image: string;
   category: string;
   type: 'digital' | 'physical';
+  inventory: number; // Stock quantity
+  lowStockThreshold: number; // Alert when stock drops below this
 }
 
 export interface CartItem {
@@ -42,10 +42,10 @@ interface AppContextType {
   cartTotal: number;
   cartItemCount: number;
   user: User | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
+  // Inventory management
+  updateInventory: (id: number, newInventory: number) => void;
+  isLowStock: (id: number) => boolean;
+  getLowStockProducts: () => Product[];
 }
 
 const defaultAppContext: AppContextType = {
@@ -64,10 +64,9 @@ const defaultAppContext: AppContextType = {
   cartTotal: 0,
   cartItemCount: 0,
   user: null,
-  loading: true,
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
-  signOut: async () => {},
+  updateInventory: () => {},
+  isLowStock: () => false,
+  getLowStockProducts: () => [],
 };
 
 const AppContext = createContext<AppContextType>(defaultAppContext);
@@ -78,8 +77,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const products: Product[] = [
     {
@@ -89,7 +86,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       originalPrice: 7.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204871871_6f7f2a46.webp",
       category: "Wallpapers",
-      type: "digital"
+      type: "digital",
+      inventory: 100,
+      lowStockThreshold: 10
     },
     {
       id: 2,
@@ -97,7 +96,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       price: 12.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204880705_c66dab7a.webp",
       category: "Books",
-      type: "physical"
+      type: "physical",
+      inventory: 50,
+      lowStockThreshold: 5
     },
     {
       id: 3,
@@ -106,7 +107,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       originalPrice: 24.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204888876_25a39d61.webp",
       category: "Tote Bags",
-      type: "physical"
+      type: "physical",
+      inventory: 25,
+      lowStockThreshold: 3
     },
     {
       id: 4,
@@ -114,7 +117,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       price: 6.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204894049_1eb729fd.webp",
       category: "Stickers",
-      type: "physical"
+      type: "physical",
+      inventory: 75,
+      lowStockThreshold: 8
     },
     {
       id: 5,
@@ -122,7 +127,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       price: 2.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204874325_9dcbc450.webp",
       category: "Wallpapers",
-      type: "digital"
+      type: "digital",
+      inventory: 200,
+      lowStockThreshold: 20
     },
     {
       id: 6,
@@ -130,7 +137,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       price: 15.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204899458_c7f4d3e6.webp",
       category: "Card Games",
-      type: "physical"
+      type: "physical",
+      inventory: 30,
+      lowStockThreshold: 4
     },
     {
       id: 7,
@@ -138,7 +147,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       price: 8.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204904519_125d5d7b.webp",
       category: "Books",
-      type: "physical"
+      type: "physical",
+      inventory: 40,
+      lowStockThreshold: 5
     },
     {
       id: 8,
@@ -146,7 +157,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       price: 3.99,
       image: "https://d64gsuwffb70l.cloudfront.net/68cc139a3d7e93f6381346d9_1758204876206_b3ab168d.webp",
       category: "Wallpapers",
-      type: "digital"
+      type: "digital",
+      inventory: 150,
+      lowStockThreshold: 15
     }
   ];
 
@@ -236,67 +249,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const cartTotal = cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // Auth functions
-  const signIn = async (email: string, password: string) => {
-    const { error } = await auth.signIn(email, password);
-    if (error) {
-      toast({
-        title: "Sign in failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Signed in successfully",
-        description: "Welcome back!",
-      });
-    }
-    return { error };
+  // Inventory management
+  const updateInventory = (id: number, newInventory: number) => {
+    // In a real app, this would update the database
+    console.log(`Updating inventory for product ${id} to ${newInventory}`);
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await auth.signUp(email, password);
-    if (error) {
-      toast({
-        title: "Sign up failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Account created",
-        description: "Please check your email to verify your account.",
-      });
-    }
-    return { error };
+  const isLowStock = (id: number) => {
+    const product = products.find(p => p.id === id);
+    return product ? product.inventory <= product.lowStockThreshold : false;
   };
 
-  const signOut = async () => {
-    await auth.signOut();
-    setUser(null);
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-    });
+  const getLowStockProducts = () => {
+    return products.filter(product => product.inventory <= product.lowStockThreshold);
   };
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const getInitialUser = async () => {
-      const user = await auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-
-    getInitialUser();
-
-    const { data: { subscription } } = auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   return (
     <AppContext.Provider
@@ -315,11 +281,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearCart,
         cartTotal,
         cartItemCount,
-        user,
-        loading,
-        signIn,
-        signUp,
-        signOut,
+        user: null,
+        updateInventory,
+        isLowStock,
+        getLowStockProducts,
       }}
     >
       {children}
