@@ -127,18 +127,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-gray-900">
-              ${price.toFixed(2)}
+              ₦{price.toLocaleString()}
             </span>
             {originalPrice && (
               <span className="text-sm text-gray-500 line-through">
-                ${originalPrice.toFixed(2)}
+                ₦{originalPrice.toLocaleString()}
               </span>
             )}
           </div>
           
           {originalPrice && (
             <div className="bg-pink-100 text-pink-700 px-2 py-1 rounded-full text-xs font-semibold">
-              Save ${(originalPrice - price).toFixed(2)}
+              Save ₦{(originalPrice - price).toLocaleString()}
             </div>
           )}
         </div>

@@ -104,7 +104,7 @@ const Wholesale: React.FC = () => {
                   </div>
                   <h3 className="font-semibold text-blue-800 mb-3">Flexible Ordering</h3>
                   <p className="text-blue-700 text-sm">
-                    Minimum orders starting at $500. Mix and match products.
+                    Minimum orders starting at ₦500,000. Mix and match products.
                   </p>
                 </div>
 
@@ -305,10 +305,10 @@ const Wholesale: React.FC = () => {
                     className="w-full px-3 py-2 border border-amber-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
                   >
                     <option value="">Select estimated volume</option>
-                    <option value="500-1000">$500 - $1,000</option>
-                    <option value="1000-2500">$1,000 - $2,500</option>
-                    <option value="2500-5000">$2,500 - $5,000</option>
-                    <option value="5000+">$5,000+</option>
+                    <option value="500-1000">₦500,000 - ₦1,000,000</option>
+                    <option value="1000-2500">₦1,000,000 - ₦2,500,000</option>
+                    <option value="2500-5000">₦2,500,000 - ₦5,000,000</option>
+                    <option value="5000+">₦5,000,000+</option>
                   </select>
                 </div>
 

@@ -76,7 +76,7 @@ const CardGames: React.FC = () => {
                     fontWeight: 'bold',
                     color: '#111827'
                   }}>
-                    $15.99
+                    ₦20,000
                   </span>
                   <button style={{
                     padding: '0.5rem 1rem',

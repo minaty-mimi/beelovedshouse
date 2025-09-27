@@ -59,7 +59,7 @@ const ShippingInfo: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Standard Shipping</h3>
                     <p className="text-gray-600 text-center mb-2">5-7 business days</p>
-                    <p className="text-amber-600 font-semibold text-center">$5.99 (Free on orders over $50)</p>
+                    <p className="text-amber-600 font-semibold text-center">₦2,500 (Free on orders over ₦50,000)</p>
                     <p className="text-gray-500 text-sm text-center mt-2">Perfect for non-urgent orders</p>
                   </div>
 
@@ -69,7 +69,7 @@ const ShippingInfo: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Express Shipping</h3>
                     <p className="text-gray-600 text-center mb-2">2-3 business days</p>
-                    <p className="text-amber-600 font-semibold text-center">$12.99</p>
+                    <p className="text-amber-600 font-semibold text-center">₦5,500</p>
                     <p className="text-gray-500 text-sm text-center mt-2">For when you need it faster</p>
                   </div>
 
@@ -79,7 +79,7 @@ const ShippingInfo: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Overnight Shipping</h3>
                     <p className="text-gray-600 text-center mb-2">1 business day</p>
-                    <p className="text-amber-600 font-semibold text-center">$24.99</p>
+                    <p className="text-amber-600 font-semibold text-center">₦12,000</p>
                     <p className="text-gray-500 text-sm text-center mt-2">Emergency orders only</p>
                   </div>
                 </div>

@@ -14,6 +14,7 @@ const CheckoutSuccess: React.FC = () => {
   const orderId = location.state?.orderId;
   const orderTotal = location.state?.orderTotal;
   const shippingAddress = location.state?.shippingAddress;
+  const paymentReference = location.state?.paymentReference;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100">
@@ -52,9 +53,14 @@ const CheckoutSuccess: React.FC = () => {
                   <p className="text-sm text-gray-600">
                     <strong>Order ID:</strong> {orderId}
                   </p>
+                  {paymentReference && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Payment Reference:</strong> {paymentReference}
+                    </p>
+                  )}
                   {orderTotal && (
                     <p className="text-sm text-gray-600">
-                      <strong>Total:</strong> ${orderTotal.toFixed(2)}
+                      <strong>Total:</strong> ₦{orderTotal.toLocaleString()}
                     </p>
                   )}
                 </div>

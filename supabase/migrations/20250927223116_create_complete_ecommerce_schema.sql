@@ -1,5 +1,5 @@
 -- Supabase Database Schema for Beeloved's House E-commerce (NGN Currency)
--- Run this SQL in your Supabase SQL Editor or via CLI
+-- Migration: create_complete_ecommerce_schema
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

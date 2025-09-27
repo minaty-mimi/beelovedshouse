@@ -111,7 +111,7 @@ const ToteBags: React.FC = () => {
                         fontWeight: 'bold',
                         color: '#111827'
                       }}>
-                        $18.99
+                        ₦25,000
                       </span>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <Button

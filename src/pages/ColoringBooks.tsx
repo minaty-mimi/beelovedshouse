@@ -76,7 +76,7 @@ const ColoringBooks: React.FC = () => {
                     fontWeight: 'bold',
                     color: '#111827'
                   }}>
-                    $8.99
+                    ₦10,000
                   </span>
                   <button style={{
                     padding: '0.5rem 1rem',

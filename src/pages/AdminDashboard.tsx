@@ -35,9 +35,9 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
+import { supabase } from '../lib/supabase';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -54,6 +54,8 @@ const AdminDashboard: React.FC = () => {
     low_stock_threshold: '',
     image: ''
   });
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
 
   // Check admin authentication
   useEffect(() => {
@@ -61,6 +63,71 @@ const AdminDashboard: React.FC = () => {
       navigate('/admin');
     }
   }, [user, isAdmin, loading, navigate]);
+
+  // Load orders from Supabase
+  const loadOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      if (!supabase) return;
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            *,
+            products (*)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading orders:', error);
+        return;
+      }
+
+      if (data) {
+        setOrders(data);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  // Set up real-time subscription for orders
+  useEffect(() => {
+    if (!supabase) return;
+
+    // Load initial orders
+    loadOrders();
+
+    // Subscribe to orders table changes
+    const ordersChannel = supabase
+      .channel('admin_orders_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('Admin orders real-time update:', payload);
+          // Reload orders when any change occurs
+          loadOrders();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (supabase) {
+        supabase.removeChannel(ordersChannel);
+      }
+    };
+  }, []);
 
   // Show loading while checking authentication
   if (loading) {
@@ -228,7 +295,7 @@ const AdminDashboard: React.FC = () => {
                   <DollarSign className="h-4 w-4 text-amber-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-amber-600">${totalRevenue.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-amber-600">₦{totalRevenue.toLocaleString()}</div>
                   <p className="text-xs text-gray-600">
                     Estimated potential
                   </p>
@@ -423,7 +490,7 @@ const AdminDashboard: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="price" className="text-gray-700">Price ($)</Label>
+                    <Label htmlFor="price" className="text-gray-700">Price (₦)</Label>
                     <Input
                       id="price"
                       type="number"
@@ -436,7 +503,7 @@ const AdminDashboard: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="originalPrice" className="text-gray-700">Original Price ($)</Label>
+                    <Label htmlFor="originalPrice" className="text-gray-700">Original Price (₦)</Label>
                     <Input
                       id="originalPrice"
                       type="number"
@@ -520,10 +587,10 @@ const AdminDashboard: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
-                          <Badge variant={product.inventory <= product.low_stock_threshold ? "destructive" : "secondary"} className="bg-amber-100 text-amber-800">
+                          <span className={`px-2 py-1 rounded text-sm ${product.inventory <= product.low_stock_threshold ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
                             Stock: {product.inventory}
-                          </Badge>
-                          <span className="font-bold text-amber-600">${product.price}</span>
+                          </span>
+                          <span className="font-bold text-amber-600">₦{product.price.toLocaleString()}</span>
                           <div className="flex space-x-2">
                             <Button size="sm" variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
                               <Edit className="w-4 h-4" />
@@ -603,7 +670,7 @@ const AdminDashboard: React.FC = () => {
                   <DollarSign className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-purple-600">$0.00</div>
+                  <div className="text-2xl font-bold text-purple-600">₦0</div>
                   <p className="text-xs text-gray-600">Per customer</p>
                 </CardContent>
               </Card>
@@ -687,7 +754,7 @@ const AdminDashboard: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-amber-600">$0.00</div>
+                  <div className="text-3xl font-bold text-amber-600">₦0</div>
                   <p className="text-sm text-gray-600">Total sales this month</p>
                   <div className="mt-4 text-sm">
                     <span className="text-green-600">+0%</span> from last month
@@ -750,7 +817,7 @@ const AdminDashboard: React.FC = () => {
                           <span className="font-medium text-gray-800">{product.title}</span>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold text-amber-600">${product.price}</div>
+                          <div className="font-bold text-amber-600">₦{product.price.toLocaleString()}</div>
                           <div className="text-sm text-gray-600">0 sold</div>
                         </div>
                       </div>
@@ -835,7 +902,7 @@ const AdminDashboard: React.FC = () => {
                       <p className="font-medium text-gray-800">Current Admin</p>
                       <p className="text-sm text-gray-600">admin@beelovedshouse.com</p>
                     </div>
-                    <Badge className="bg-amber-100 text-amber-800">Super Admin</Badge>
+                    <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-sm">Super Admin</span>
                   </div>
                   <div className="text-center py-4">
                     <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">

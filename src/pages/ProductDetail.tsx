@@ -118,15 +118,15 @@ const ProductDetail: React.FC = () => {
               {/* Price */}
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold text-gray-900">
-                  ${product.price.toFixed(2)}
+                  ₦{product.price.toLocaleString()}
                 </span>
                 {product.originalPrice && (
                   <>
                     <span className="text-xl text-gray-500 line-through">
-                      ${product.originalPrice.toFixed(2)}
+                      ₦{product.originalPrice.toLocaleString()}
                     </span>
                     <Badge variant="destructive">
-                      Save ${(product.originalPrice - product.price).toFixed(2)}
+                      Save ₦{(product.originalPrice - product.price).toLocaleString()}
                     </Badge>
                   </>
                 )}
@@ -167,7 +167,7 @@ const ProductDetail: React.FC = () => {
                     <ul className="text-green-700 text-sm space-y-1">
                       <li>• Premium quality materials</li>
                       <li>• Carefully packaged</li>
-                      <li>• Free shipping on orders over $25</li>
+                      <li>• Free shipping on orders over ₦50,000</li>
                       <li>• 30-day return policy</li>
                     </ul>
                   </div>
@@ -262,7 +262,7 @@ const ProductDetail: React.FC = () => {
                       {relatedProduct.title}
                     </h3>
                     <p className="text-lg font-bold text-gray-900">
-                      ${relatedProduct.price.toFixed(2)}
+                      ₦{relatedProduct.price.toLocaleString()}
                     </p>
                   </div>
                 ))}

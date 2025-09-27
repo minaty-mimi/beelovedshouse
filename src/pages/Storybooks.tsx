@@ -111,7 +111,7 @@ const Storybooks: React.FC = () => {
                         fontWeight: 'bold',
                         color: '#111827'
                       }}>
-                        $12.99
+                        ₦15,000
                       </span>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <Button

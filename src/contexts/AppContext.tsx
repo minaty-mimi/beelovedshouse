@@ -142,9 +142,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Refresh products function
-  const refreshProducts = async () => {
-    await loadProducts();
+  // Set up real-time subscriptions
+  const setupRealtimeSubscriptions = () => {
+    if (!supabase) return;
+
+    // Subscribe to products table changes
+    const productsChannel = supabase
+      .channel('products_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products'
+        },
+        (payload) => {
+          console.log('Products real-time update:', payload);
+          // Reload products when any change occurs
+          loadProducts();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to orders table changes (for admin dashboard)
+    const ordersChannel = supabase
+      .channel('orders_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('Orders real-time update:', payload);
+          // Orders will be handled by individual components that need them
+        }
+      )
+      .subscribe();
+
+    // Subscribe to cart_items table changes (for cart synchronization)
+    const cartChannel = supabase
+      .channel('cart_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cart_items'
+        },
+        (payload) => {
+          console.log('Cart real-time update:', payload);
+          // Reload cart when changes occur
+          loadCart();
+        }
+      )
+      .subscribe();
+
+    // Return cleanup function
+    return () => {
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(cartChannel);
+    };
   };
 
   // Load products on mount
@@ -160,6 +220,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await loadCart();
     };
     initSession();
+  }, []);
+
+  // Set up real-time subscriptions after functions are defined
+  useEffect(() => {
+    const cleanup = setupRealtimeSubscriptions();
+    return cleanup; // Cleanup subscriptions on unmount
   }, []);
 
   // Load cart from database
@@ -355,6 +421,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const getLowStockProducts = () => {
     return products.filter(product => product.inventory <= product.low_stock_threshold);
+  };
+
+  // Product management
+  const refreshProducts = async () => {
+    await loadProducts();
   };
 
   // Local sign out function (no backend needed)

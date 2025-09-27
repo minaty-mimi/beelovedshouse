@@ -223,7 +223,7 @@ const TermsOfService: React.FC = () => {
                   <h4 className="font-semibold text-yellow-800 mb-2">Shipping Costs</h4>
                   <p className="text-yellow-700">
                     Shipping costs are calculated at checkout and depend on order weight, dimensions, and destination.
-                    We offer free shipping on orders over $50 within the continental US.
+                    We offer free shipping on orders over ₦50,000 within Nigeria.
                   </p>
                 </div>
               </div>

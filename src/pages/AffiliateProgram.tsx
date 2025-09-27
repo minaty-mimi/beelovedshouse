@@ -102,7 +102,7 @@ const AffiliateProgram: React.FC = () => {
                   </div>
                   <h3 className="font-semibold text-blue-800 mb-3">Monthly Payouts</h3>
                   <p className="text-blue-700 text-sm">
-                    Get paid monthly via PayPal, direct deposit, or check (minimum $25)
+                    Get paid monthly via PayPal, direct deposit, or check (minimum ₦30,000)
                   </p>
                 </div>
 

@@ -236,7 +236,7 @@ const Profile: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">🚚</div>
-                        <span className="text-sm">Free shipping on orders over $50</span>
+                        <span className="text-sm">Free shipping on orders over ₦50,000</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">🎁</div>

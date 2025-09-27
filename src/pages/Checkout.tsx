@@ -8,7 +8,7 @@ import { Separator } from '../components/ui/separator';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Truck, Shield } from 'lucide-react';
 import { orderOperations } from '../lib/database';
-import { paymentService } from '../lib/stripe';
+import { paymentService } from '../lib/paystack';
 
 // Initialize Stripe (replace with your publishable key)
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
@@ -64,53 +64,63 @@ const Checkout: React.FC = () => {
         cartTotal
       );
 
-      // Prepare payment data for Stripe
+      // Prepare payment data for Paystack
       const paymentData = {
-        amount: cartTotal,
-        currency: 'usd',
+        amount: paymentService.convertToKobo(cartTotal, 'NGN'), // Convert to kobo
+        currency: 'NGN',
         orderId: order.id,
         customerEmail: formData.email,
+        customerName: `${formData.firstName} ${formData.lastName}`,
         shippingAddress,
         lineItems: cart.map(item => ({
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: item.product.title,
-              images: [item.product.image]
-            },
-            unit_amount: Math.round(item.product.price * 100) // Convert to cents
-          },
-          quantity: item.quantity
+          name: item.product.title,
+          quantity: item.quantity,
+          amount: paymentService.convertToKobo(item.product.price, 'NGN')
         }))
       };
 
-      // In a real implementation, you would:
-      // 1. Call your backend API to create a Stripe Checkout Session
-      // 2. Redirect to Stripe's hosted checkout page
-      // 3. Handle the success/cancel redirects from Stripe
+      // Initialize Paystack payment
+      await paymentService.initializePayment(
+        paymentData,
+        // Success callback
+        async (reference: string) => {
+          try {
+            // Verify payment (in real implementation)
+            const verification = await paymentService.processPayment(reference);
 
-      // For now, simulate the payment process
-      alert(`Order #${order.id} created successfully!\n\nIn a real app, you would be redirected to Stripe Checkout now.\n\nPayment Amount: $${cartTotal.toFixed(2)}`);
+            if (verification.success) {
+              // Clear cart after successful payment
+              await clearCart();
 
-      // Clear cart after successful order creation
-      await clearCart();
-
-      // Navigate to success page with order details
-      navigate('/checkout/success', {
-        state: {
-          orderId: order.id,
-          orderTotal: cartTotal,
-          shippingAddress
+              // Navigate to success page with order details
+              navigate('/checkout/success', {
+                state: {
+                  orderId: order.id,
+                  orderTotal: cartTotal,
+                  shippingAddress,
+                  paymentReference: reference
+                }
+              });
+            } else {
+              alert('Payment verification failed. Please contact support.');
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            alert('Payment verification failed. Please contact support.');
+          }
+        },
+        // Close callback
+        () => {
+          console.log('Payment modal closed by user');
+          // Optionally show a message or handle incomplete payment
         }
-      });
+      );
 
     } catch (error) {
       console.error('Order creation failed:', error);
       alert('Failed to create order. Please try again.');
     }
-  };
-
-  if (cart.length === 0) {
+  };  if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100">
         {/* Floating Elements */}
@@ -163,13 +173,13 @@ const Checkout: React.FC = () => {
                       <h4 className="font-medium text-gray-800">{item.product.title}</h4>
                       <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                     </div>
-                    <span className="font-medium text-gray-900">${(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium text-gray-900">₦{(item.product.price * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
                 <Separator className="my-4" />
                 <div className="flex justify-between items-center text-lg font-bold text-gray-900">
                   <span>Total:</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>₦{cartTotal.toLocaleString()}</span>
                 </div>
               </CardContent>
             </Card>
@@ -289,7 +299,7 @@ const Checkout: React.FC = () => {
                   type="submit"
                   className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3"
                 >
-                  Pay ${cartTotal.toFixed(2)}
+                  Pay ₦{cartTotal.toLocaleString()}
                 </Button>
               </form>
             </CardContent>

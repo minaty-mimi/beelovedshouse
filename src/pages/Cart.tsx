@@ -128,7 +128,7 @@ const Cart: React.FC = () => {
                           </h3>
                           <p className="text-sm text-gray-600 mb-2">{item.product.category}</p>
                           <p className="text-lg font-bold text-gray-900">
-                            ${item.product.price.toFixed(2)}
+                            ₦{item.product.price.toLocaleString()}
                           </p>
                         </div>
 
@@ -157,7 +157,7 @@ const Cart: React.FC = () => {
                         {/* Subtotal */}
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            ${(item.product.price * item.quantity).toFixed(2)}
+                            ₦{(item.product.price * item.quantity).toLocaleString()}
                           </p>
                           <Button
                             variant="ghost"
@@ -200,22 +200,22 @@ const Cart: React.FC = () => {
                     <div className="space-y-3 mb-6">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Subtotal ({cartItemCount} items)</span>
-                        <span className="font-semibold">${cartTotal.toFixed(2)}</span>
+                        <span className="font-semibold">₦{cartTotal.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Shipping</span>
                         <span className="font-semibold">
-                          {cartTotal >= 25 ? 'Free' : '$4.99'}
+                          {cartTotal >= 50000 ? 'Free' : '₦2,500'}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Tax</span>
-                        <span className="font-semibold">${(cartTotal * 0.08).toFixed(2)}</span>
+                        <span className="font-semibold">₦{(cartTotal * 0.075).toLocaleString()}</span>
                       </div>
                       <hr className="my-3" />
                       <div className="flex justify-between text-lg font-bold">
                         <span>Total</span>
-                        <span>${(cartTotal + (cartTotal >= 25 ? 0 : 4.99) + (cartTotal * 0.08)).toFixed(2)}</span>
+                        <span>₦{(cartTotal + (cartTotal >= 50000 ? 0 : 2500) + (cartTotal * 0.075)).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -228,7 +228,7 @@ const Cart: React.FC = () => {
                     </Button>
 
                     <p className="text-xs text-gray-500 text-center">
-                      Secure checkout powered by Stripe
+                      Secure checkout powered by Paystack
                     </p>
                   </CardContent>
                 </Card>

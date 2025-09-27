@@ -111,7 +111,7 @@ const DigitalWallpapers: React.FC = () => {
                         fontWeight: 'bold',
                         color: '#111827'
                       }}>
-                        $2.99
+                        ₦1,500
                       </span>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <Button
