@@ -41,7 +41,7 @@ import { Textarea } from '../components/ui/textarea';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { products, updateInventory, getLowStockProducts } = useAppContext();
+  const { products, productsLoading, updateInventory, getLowStockProducts } = useAppContext();
   const { user, userProfile, isAdmin, logout, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [newProduct, setNewProduct] = useState({
@@ -51,7 +51,7 @@ const AdminDashboard: React.FC = () => {
     category: '',
     type: 'digital' as 'digital' | 'physical',
     inventory: '',
-    lowStockThreshold: '',
+    low_stock_threshold: '',
     image: ''
   });
 
@@ -100,7 +100,7 @@ const AdminDashboard: React.FC = () => {
       category: '',
       type: 'digital',
       inventory: '',
-      lowStockThreshold: '',
+      low_stock_threshold: '',
       image: ''
     });
   };
@@ -499,31 +499,43 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {products.map(product => (
-                    <div key={product.id} className="flex items-center justify-between p-4 border border-amber-200 rounded-lg bg-white/50">
-                      <div className="flex items-center space-x-4">
-                        <img src={product.image} alt={product.title} className="w-12 h-12 rounded object-cover" />
-                        <div>
-                          <h3 className="font-medium text-gray-800">{product.title}</h3>
-                          <p className="text-sm text-gray-600">{product.category} • {product.type}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <Badge variant={product.inventory <= product.lowStockThreshold ? "destructive" : "secondary"} className="bg-amber-100 text-amber-800">
-                          Stock: {product.inventory}
-                        </Badge>
-                        <span className="font-bold text-amber-600">${product.price}</span>
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
+                  {productsLoading ? (
+                    <div className="flex justify-center items-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                      <span className="ml-2 text-gray-600">Loading products...</span>
                     </div>
-                  ))}
+                  ) : products.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No products found. Add your first product above.</p>
+                    </div>
+                  ) : (
+                    products.map(product => (
+                      <div key={product.id} className="flex items-center justify-between p-4 border border-amber-200 rounded-lg bg-white/50">
+                        <div className="flex items-center space-x-4">
+                          <img src={product.image} alt={product.title} className="w-12 h-12 rounded object-cover" />
+                          <div>
+                            <h3 className="font-medium text-gray-800">{product.title}</h3>
+                            <p className="text-sm text-gray-600">{product.category} • {product.type}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <Badge variant={product.inventory <= product.low_stock_threshold ? "destructive" : "secondary"} className="bg-amber-100 text-amber-800">
+                            Stock: {product.inventory}
+                          </Badge>
+                          <span className="font-bold text-amber-600">${product.price}</span>
+                          <div className="flex space-x-2">
+                            <Button size="sm" variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -722,19 +734,28 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {products.slice(0, 5).map((product, index) => (
-                    <div key={product.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-lg font-bold text-amber-600">#{index + 1}</span>
-                        <img src={product.image} alt={product.title} className="w-8 h-8 rounded object-cover" />
-                        <span className="font-medium text-gray-800">{product.title}</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-amber-600">${product.price}</div>
-                        <div className="text-sm text-gray-600">0 sold</div>
-                      </div>
+                  {productsLoading ? (
+                    <div className="flex justify-center items-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
+                      <span className="ml-2 text-sm text-gray-600">Loading products...</span>
                     </div>
-                  ))}
+                  ) : products.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">No products available</p>
+                  ) : (
+                    products.slice(0, 5).map((product, index) => (
+                      <div key={product.id} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-lg font-bold text-amber-600">#{index + 1}</span>
+                          <img src={product.image} alt={product.title} className="w-8 h-8 rounded object-cover" />
+                          <span className="font-medium text-gray-800">{product.title}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-amber-600">${product.price}</div>
+                          <div className="text-sm text-gray-600">0 sold</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>

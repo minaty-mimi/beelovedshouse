@@ -3,7 +3,7 @@ import ProductCard from './ProductCard';
 import { useAppContext } from '@/contexts/AppContext';
 
 const FeaturedProducts: React.FC = () => {
-  const { products } = useAppContext();
+  const { products, productsLoading } = useAppContext();
   const [activeFilter, setActiveFilter] = useState('all');
 
   const filters = [
@@ -55,11 +55,17 @@ const FeaturedProducts: React.FC = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredProducts.map(product => (
-            <ProductCard key={product.id} {...product} />
-          ))}
-        </div>
+        {productsLoading ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredProducts.map(product => (
+              <ProductCard key={product.id} {...product} />
+            ))}
+          </div>
+        )}
 
         <div className="text-center mt-12">
           <button className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-300 shadow-lg">

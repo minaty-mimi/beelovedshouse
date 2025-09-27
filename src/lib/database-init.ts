@@ -18,58 +18,7 @@ export async function initializeDatabase() {
       return;
     }
 
-    // Insert sample products if table is empty
-    const { data: existingProducts } = await supabase
-      .from('products')
-      .select('id')
-      .limit(1);
-
-    if (!existingProducts || existingProducts.length === 0) {
-      const sampleProducts = [
-        {
-          title: 'Custom Love Letter',
-          price: 25.00,
-          original_price: 30.00,
-          image: '/api/placeholder/300/300',
-          category: 'Digital Products',
-          type: 'digital',
-          inventory: 100,
-          low_stock_threshold: 10
-        },
-        {
-          title: 'Personalized Photo Book',
-          price: 45.00,
-          original_price: 55.00,
-          image: '/api/placeholder/300/300',
-          category: 'Physical Products',
-          type: 'physical',
-          inventory: 50,
-          low_stock_threshold: 5
-        },
-        {
-          title: 'Custom Jewelry Box',
-          price: 35.00,
-          original_price: 42.00,
-          image: '/api/placeholder/300/300',
-          category: 'Physical Products',
-          type: 'physical',
-          inventory: 25,
-          low_stock_threshold: 3
-        }
-      ];
-
-      const { error: insertError } = await supabase
-        .from('products')
-        .insert(sampleProducts);
-
-      if (insertError) {
-        console.error('Error inserting sample products:', insertError);
-      } else {
-        console.log('Sample products inserted successfully');
-      }
-    }
-
-    console.log('Database initialized successfully');
+    console.log('Database initialized successfully - no sample data will be inserted');
   } catch (error) {
     console.error('Error initializing database:', error);
   }
