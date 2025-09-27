@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '../lib/supabase';
+import { cartOperations, sessionManager } from '../lib/database';
 
 export interface Product {
   id: number;
@@ -34,15 +35,16 @@ interface AppContextType {
   toggleSidebar: () => void;
   products: Product[];
   productsLoading: boolean;
+  cartLoading: boolean;
   wishlist: number[];
   addToWishlist: (id: number) => void;
   removeFromWishlist: (id: number) => void;
   isInWishlist: (id: number) => boolean;
   cart: CartItem[];
-  addToCart: (id: number, quantity?: number) => void;
-  removeFromCart: (id: number) => void;
-  updateCartQuantity: (id: number, quantity: number) => void;
-  clearCart: () => void;
+  addToCart: (id: number, quantity?: number) => Promise<void>;
+  removeFromCart: (id: number) => Promise<void>;
+  updateCartQuantity: (id: number, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   cartTotal: number;
   cartItemCount: number;
   user: User | null;
@@ -60,15 +62,16 @@ const defaultAppContext: AppContextType = {
   toggleSidebar: () => {},
   products: [],
   productsLoading: true,
+  cartLoading: true,
   wishlist: [],
   addToWishlist: () => {},
   removeFromWishlist: () => {},
   isInWishlist: () => false,
   cart: [],
-  addToCart: () => {},
-  removeFromCart: () => {},
-  updateCartQuantity: () => {},
-  clearCart: () => {},
+  addToCart: async () => {},
+  removeFromCart: async () => {},
+  updateCartQuantity: async () => {},
+  clearCart: async () => {},
   cartTotal: 0,
   cartItemCount: 0,
   user: null,
@@ -89,6 +92,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [productsLoading, setProductsLoading] = useState(true);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartLoading, setCartLoading] = useState(true);
+  const [sessionId, setSessionId] = useState<string>('');
 
   // Get user from localStorage
   const getStoredUser = (): User | null => {
@@ -147,6 +152,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loadProducts();
   }, []);
 
+  // Initialize session and load cart
+  useEffect(() => {
+    const initSession = async () => {
+      const newSessionId = sessionManager.getSessionId();
+      setSessionId(newSessionId);
+      await loadCart();
+    };
+    initSession();
+  }, []);
+
+  // Load cart from database
+  const loadCart = async () => {
+    try {
+      setCartLoading(true);
+      const currentSessionId = sessionManager.getSessionId();
+      const cartData = await cartOperations.loadCartItems(user?.id || null, currentSessionId);
+
+      const formattedCart: CartItem[] = cartData.map(item => ({
+        id: item.product_id,
+        product: item.products,
+        quantity: item.quantity
+      }));
+
+      setCart(formattedCart);
+    } catch (error) {
+      console.error('Error loading cart:', error);
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  // Transfer cart when user signs in
+  useEffect(() => {
+    const transferCart = async () => {
+      if (user && sessionId) {
+        try {
+          await cartOperations.transferCartToUser(sessionId, user.id);
+          // Reload cart after transfer
+          await loadCart();
+        } catch (error) {
+          console.error('Error transferring cart:', error);
+        }
+      }
+    };
+    transferCart();
+  }, [user?.id]); // Only run when user ID changes
+
   const addToWishlist = (id: number) => {
     setWishlist(prev => {
       if (prev.includes(id)) return prev;
@@ -170,60 +222,112 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isInWishlist = (id: number) => wishlist.includes(id);
 
-  const addToCart = (id: number, quantity: number = 1) => {
+  const addToCart = async (id: number, quantity: number = 1) => {
     const product = products.find(p => p.id === id);
     if (!product) return;
 
-    setCart(prev => {
-      const existingItem = prev.find(item => item.id === id);
-      if (existingItem) {
-        return prev.map(item =>
-          item.id === id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        toast({
-          title: "Added to cart",
-          description: `${product.title} has been added to your cart.`,
-        });
-        return [...prev, { id, product, quantity }];
-      }
-    });
+    try {
+      // Save to database first
+      await cartOperations.saveCartItem(user?.id || null, sessionId, id, quantity);
+
+      // Update local state
+      setCart(prev => {
+        const existingItem = prev.find(item => item.id === id);
+        if (existingItem) {
+          return prev.map(item =>
+            item.id === id
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        } else {
+          toast({
+            title: "Added to cart",
+            description: `${product.title} has been added to your cart.`,
+          });
+          return [...prev, { id, product, quantity }];
+        }
+      });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const removeFromCart = (id: number) => {
-    setCart(prev => {
-      const item = prev.find(item => item.id === id);
-      if (item) {
-        toast({
-          title: "Removed from cart",
-          description: `${item.product.title} has been removed from your cart.`,
-        });
-      }
-      return prev.filter(item => item.id !== id);
-    });
+  const removeFromCart = async (id: number) => {
+    try {
+      // Remove from database first
+      await cartOperations.removeCartItem(user?.id || null, sessionId, id);
+
+      // Update local state
+      setCart(prev => {
+        const item = prev.find(item => item.id === id);
+        if (item) {
+          toast({
+            title: "Removed from cart",
+            description: `${item.product.title} has been removed from your cart.`,
+          });
+        }
+        return prev.filter(item => item.id !== id);
+      });
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove item from cart. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const updateCartQuantity = (id: number, quantity: number) => {
+  const updateCartQuantity = async (id: number, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      await removeFromCart(id);
       return;
     }
 
-    setCart(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      )
-    );
+    try {
+      // Update database first
+      await cartOperations.updateCartQuantity(user?.id || null, sessionId, id, quantity);
+
+      // Update local state
+      setCart(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, quantity } : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating cart quantity:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update item quantity. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
-    toast({
-      title: "Cart cleared",
-      description: "All items have been removed from your cart.",
-    });
+  const clearCart = async () => {
+    try {
+      // Clear from database first
+      await cartOperations.clearCart(user?.id || null, sessionId);
+
+      // Update local state
+      setCart([]);
+      toast({
+        title: "Cart cleared",
+        description: "All items have been removed from your cart.",
+      });
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear cart. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const cartTotal = cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
@@ -269,6 +373,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleSidebar,
         products,
         productsLoading,
+        cartLoading,
         wishlist,
         addToWishlist,
         removeFromWishlist,

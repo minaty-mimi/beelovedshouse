@@ -6,8 +6,9 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
 import { useNavigate } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
 import { CreditCard, Truck, Shield } from 'lucide-react';
+import { orderOperations } from '../lib/database';
+import { paymentService } from '../lib/stripe';
 
 // Initialize Stripe (replace with your publishable key)
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
@@ -15,7 +16,7 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   : null;
 
 const Checkout: React.FC = () => {
-  const { cart, cartTotal, clearCart } = useAppContext();
+  const { cart, cartTotal, clearCart, user } = useAppContext();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -37,17 +38,75 @@ const Checkout: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      // Here you would typically send the order to your backend
-      // For now, we'll simulate a successful payment
-      // No loading states - immediate processing like major e-commerce sites
+    if (!user) {
+      alert('Please sign in to place an order');
+      navigate('/auth');
+      return;
+    }
 
-      // Clear cart and redirect to success page
-      clearCart();
-      navigate('/checkout/success');
+    try {
+      // Create shipping address object
+      const shippingAddress = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode,
+        country: formData.country
+      };
+
+      // Create the order first (without payment)
+      const order = await orderOperations.createOrder(
+        user.id,
+        cart,
+        shippingAddress,
+        cartTotal
+      );
+
+      // Prepare payment data for Stripe
+      const paymentData = {
+        amount: cartTotal,
+        currency: 'usd',
+        orderId: order.id,
+        customerEmail: formData.email,
+        shippingAddress,
+        lineItems: cart.map(item => ({
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: item.product.title,
+              images: [item.product.image]
+            },
+            unit_amount: Math.round(item.product.price * 100) // Convert to cents
+          },
+          quantity: item.quantity
+        }))
+      };
+
+      // In a real implementation, you would:
+      // 1. Call your backend API to create a Stripe Checkout Session
+      // 2. Redirect to Stripe's hosted checkout page
+      // 3. Handle the success/cancel redirects from Stripe
+
+      // For now, simulate the payment process
+      alert(`Order #${order.id} created successfully!\n\nIn a real app, you would be redirected to Stripe Checkout now.\n\nPayment Amount: $${cartTotal.toFixed(2)}`);
+
+      // Clear cart after successful order creation
+      await clearCart();
+
+      // Navigate to success page with order details
+      navigate('/checkout/success', {
+        state: {
+          orderId: order.id,
+          orderTotal: cartTotal,
+          shippingAddress
+        }
+      });
+
     } catch (error) {
-      console.error('Payment failed:', error);
-      // Handle error
+      console.error('Order creation failed:', error);
+      alert('Failed to create order. Please try again.');
     }
   };
 
