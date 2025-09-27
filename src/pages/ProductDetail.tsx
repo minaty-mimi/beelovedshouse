@@ -12,7 +12,7 @@ import { trackProductView, trackAddToCart, trackEvent } from '@/utils/analytics'
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products, isInWishlist, addToWishlist, removeFromWishlist } = useAppContext();
+  const { products, isInWishlist, addToWishlist, removeFromWishlist, addToCart } = useAppContext();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -50,12 +50,22 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const handleAddToCart = () => {
-    trackAddToCart(product, quantity);
-    toast({
-      title: "Added to cart",
-      description: `${product.title} has been added to your cart.`,
-    });
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id, quantity);
+      trackAddToCart(product, quantity);
+      toast({
+        title: "Added to cart",
+        description: `${product.title} has been added to your cart.`,
+      });
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleBuyNow = () => {

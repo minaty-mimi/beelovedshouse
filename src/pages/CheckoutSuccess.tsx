@@ -1,13 +1,19 @@
 import React from 'react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { CheckCircle, Home, ShoppingBag, Mail, Package } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Home, ShoppingBag, Mail, Package, Truck, MapPin } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 const CheckoutSuccess: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get order data from navigation state
+  const orderId = location.state?.orderId;
+  const orderTotal = location.state?.orderTotal;
+  const shippingAddress = location.state?.shippingAddress;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100">
@@ -40,6 +46,36 @@ const CheckoutSuccess: React.FC = () => {
                 Thank you for your purchase! Your order has been successfully placed.
               </p>
 
+              {orderId && (
+                <div className="bg-amber-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-2">Order Details</h3>
+                  <p className="text-sm text-gray-600">
+                    <strong>Order ID:</strong> {orderId}
+                  </p>
+                  {orderTotal && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Total:</strong> ${orderTotal.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {shippingAddress && (
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <MapPin size={16} />
+                    Shipping Address
+                  </h3>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p>{shippingAddress.firstName} {shippingAddress.lastName}</p>
+                    <p>{shippingAddress.address}</p>
+                    <p>{shippingAddress.city}, {shippingAddress.zipCode}</p>
+                    <p>{shippingAddress.country}</p>
+                    <p>{shippingAddress.email}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-amber-50 rounded-lg p-4 space-y-3">
                 <div className="flex items-center gap-3 text-sm text-gray-700">
                   <Mail className="w-5 h-5 text-amber-600" />
@@ -48,6 +84,10 @@ const CheckoutSuccess: React.FC = () => {
                 <div className="flex items-center gap-3 text-sm text-gray-700">
                   <Package className="w-5 h-5 text-amber-600" />
                   <span>Order tracking information will be sent to your email.</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                  <Truck className="w-5 h-5 text-amber-600" />
+                  <span>Processing typically takes 1-2 business days.</span>
                 </div>
               </div>
 

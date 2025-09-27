@@ -11,12 +11,21 @@ const Cart: React.FC = () => {
   const { cart, updateCartQuantity, removeFromCart, clearCart, cartTotal, cartItemCount } = useAppContext();
   const navigate = useNavigate();
 
-  const handleQuantityChange = (id: number, newQuantity: number) => {
-    updateCartQuantity(id, newQuantity);
+  const handleQuantityChange = async (id: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    try {
+      await updateCartQuantity(id, newQuantity);
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+    }
   };
 
-  const handleRemoveItem = (id: number) => {
-    removeFromCart(id);
+  const handleRemoveItem = async (id: number) => {
+    try {
+      await removeFromCart(id);
+    } catch (error) {
+      console.error('Failed to remove item:', error);
+    }
   };
 
   const handleCheckout = () => {
@@ -168,7 +177,13 @@ const Cart: React.FC = () => {
                 <div className="flex justify-end">
                   <Button
                     variant="outline"
-                    onClick={clearCart}
+                    onClick={async () => {
+                      try {
+                        await clearCart();
+                      } catch (error) {
+                        console.error('Failed to clear cart:', error);
+                      }
+                    }}
                     className="text-red-500 border-red-500 hover:bg-red-50"
                   >
                     Clear Cart
