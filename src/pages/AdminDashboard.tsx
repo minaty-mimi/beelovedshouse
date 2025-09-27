@@ -15,7 +15,18 @@ import {
   Eye,
   AlertTriangle,
   Settings,
-  Heart
+  Heart,
+  Mail,
+  MessageSquare,
+  FileText,
+  CreditCard,
+  Truck,
+  Tag,
+  Download,
+  Send,
+  UserCheck,
+  Shield,
+  Globe
 } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { Button } from '../components/ui/button';
@@ -24,6 +35,8 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Textarea } from '../components/ui/textarea';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -129,12 +142,18 @@ const AdminDashboard: React.FC = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm border border-amber-200">
+          <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm border border-amber-200">
             <TabsTrigger
               value="overview"
               className="data-[state=active]:bg-amber-500 data-[state=active]:text-white"
             >
               Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="orders"
+              className="data-[state=active]:bg-amber-500 data-[state=active]:text-white"
+            >
+              Orders
             </TabsTrigger>
             <TabsTrigger
               value="products"
@@ -143,16 +162,22 @@ const AdminDashboard: React.FC = () => {
               Products
             </TabsTrigger>
             <TabsTrigger
-              value="inventory"
+              value="customers"
               className="data-[state=active]:bg-amber-500 data-[state=active]:text-white"
             >
-              Inventory
+              Customers
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
               className="data-[state=active]:bg-amber-500 data-[state=active]:text-white"
             >
               Analytics
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="data-[state=active]:bg-amber-500 data-[state=active]:text-white"
+            >
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -240,6 +265,89 @@ const AdminDashboard: React.FC = () => {
                       <p className="text-xs text-gray-600">5 minutes ago</p>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Orders Tab */}
+          <TabsContent value="orders" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2
+                className="text-3xl font-bold text-gray-800"
+                style={{fontFamily: 'Amatic SC, cursive'}}
+              >
+                Order Management
+              </h2>
+              <div className="flex gap-2">
+                <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Orders
+                </Button>
+                <Button className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                  <Send className="w-4 h-4" />
+                  Send Updates
+                </Button>
+              </div>
+            </div>
+
+            {/* Order Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Total Orders</CardTitle>
+                  <ShoppingCart className="h-4 w-4 text-amber-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-amber-600">0</div>
+                  <p className="text-xs text-gray-600">All time</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Pending Orders</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">0</div>
+                  <p className="text-xs text-gray-600">Awaiting processing</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Shipped Today</CardTitle>
+                  <Truck className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">0</div>
+                  <p className="text-xs text-gray-600">Orders shipped</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">$0.00</div>
+                  <p className="text-xs text-gray-600">This month</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Orders Table */}
+            <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-gray-800">Recent Orders</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No orders yet</h3>
+                  <p className="text-gray-500">Orders will appear here once customers start purchasing products.</p>
                 </div>
               </CardContent>
             </Card>
@@ -396,117 +504,139 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </TabsContent>
 
-          {/* Inventory Tab */}
-          <TabsContent value="inventory" className="space-y-6">
+          {/* Customers Tab */}
+          <TabsContent value="customers" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2
                 className="text-3xl font-bold text-gray-800"
                 style={{fontFamily: 'Amatic SC, cursive'}}
               >
-                Inventory Management
+                Customer Management
               </h2>
-              <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
-                <Upload className="w-4 h-4 mr-2" />
-                Bulk Update
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Customers
+                </Button>
+                <Button className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                  <Mail className="w-4 h-4" />
+                  Send Newsletter
+                </Button>
+              </div>
             </div>
 
-            {/* Low Stock Alerts */}
-            {lowStockProducts.length > 0 && (
-              <Card className="border-red-200 bg-red-50/80 backdrop-blur-sm shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-red-800 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    Low Stock Alerts
-                  </CardTitle>
+            {/* Customer Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Total Customers</CardTitle>
+                  <Users className="h-4 w-4 text-amber-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    {lowStockProducts.map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-3 bg-white rounded border border-red-200">
-                        <div className="flex items-center space-x-3">
-                          <img src={product.image} alt={product.title} className="w-8 h-8 rounded object-cover" />
-                          <span className="font-medium text-gray-800">{product.title}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-red-600 font-bold">{product.inventory} left</span>
-                          <Button size="sm" onClick={() => handleUpdateInventory(product.id, product.inventory + 10)} className="bg-amber-500 hover:bg-amber-600 text-white">
-                            Restock +10
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="text-2xl font-bold text-amber-600">0</div>
+                  <p className="text-xs text-gray-600">Registered users</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Active Customers</CardTitle>
+                  <UserCheck className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">0</div>
+                  <p className="text-xs text-gray-600">Active this month</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">New Signups</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">0</div>
+                  <p className="text-xs text-gray-600">This week</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Avg. Order Value</CardTitle>
+                  <DollarSign className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-600">$0.00</div>
+                  <p className="text-xs text-gray-600">Per customer</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Customer Management */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Customer List */}
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-gray-800">Customer Database</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">No customers yet</h3>
+                    <p className="text-gray-500">Customer data will appear here once users register and make purchases.</p>
                   </div>
                 </CardContent>
               </Card>
-            )}
 
-            {/* Inventory Table */}
-            <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-gray-800">Current Inventory</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-amber-200">
-                        <th className="text-left py-2 text-gray-700">Product</th>
-                        <th className="text-left py-2 text-gray-700">Category</th>
-                        <th className="text-left py-2 text-gray-700">Type</th>
-                        <th className="text-left py-2 text-gray-700">Stock</th>
-                        <th className="text-left py-2 text-gray-700">Threshold</th>
-                        <th className="text-left py-2 text-gray-700">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map(product => (
-                        <tr key={product.id} className="border-b border-amber-100">
-                          <td className="py-3">
-                            <div className="flex items-center space-x-3">
-                              <img src={product.image} alt={product.title} className="w-8 h-8 rounded object-cover" />
-                              <span className="font-medium text-gray-800">{product.title}</span>
-                            </div>
-                          </td>
-                          <td className="text-gray-700">{product.category}</td>
-                          <td>
-                            <Badge variant={product.type === 'digital' ? 'default' : 'secondary'} className="bg-amber-100 text-amber-800">
-                              {product.type}
-                            </Badge>
-                          </td>
-                          <td>
-                            <span className={product.inventory <= product.lowStockThreshold ? 'text-red-600 font-bold' : 'text-gray-700'}>
-                              {product.inventory}
-                            </span>
-                          </td>
-                          <td className="text-gray-700">{product.lowStockThreshold}</td>
-                          <td>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUpdateInventory(product.id, product.inventory + 1)}
-                                className="border-amber-200 text-amber-700 hover:bg-amber-50"
-                              >
-                                +1
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUpdateInventory(product.id, Math.max(0, product.inventory - 1))}
-                                className="border-red-200 text-red-600 hover:bg-red-50"
-                              >
-                                -1
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Customer Support */}
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-gray-800">Customer Support</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <MessageSquare className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <p className="font-medium text-gray-800">Support Tickets</p>
+                          <p className="text-sm text-gray-600">0 open tickets</p>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                        View All
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Mail className="w-5 h-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-800">Email Campaigns</p>
+                          <p className="text-sm text-gray-600">Send newsletters & promotions</p>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline" className="border-green-200 text-green-700 hover:bg-green-50">
+                        Create
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Heart className="w-5 h-5 text-purple-600" />
+                        <div>
+                          <p className="font-medium text-gray-800">Loyalty Program</p>
+                          <p className="text-sm text-gray-600">Manage rewards & points</p>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50">
+                        Configure
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Analytics Tab */}
@@ -580,6 +710,232 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2
+                className="text-3xl font-bold text-gray-800"
+                style={{fontFamily: 'Amatic SC, cursive'}}
+              >
+                Store Settings
+              </h2>
+              <Button className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                <Settings className="w-4 h-4" />
+                Save Changes
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Store Information */}
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-gray-800 flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Store Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="storeName" className="text-gray-700">Store Name</Label>
+                    <Input
+                      id="storeName"
+                      defaultValue="Bee Loved's House"
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="storeEmail" className="text-gray-700">Contact Email</Label>
+                    <Input
+                      id="storeEmail"
+                      type="email"
+                      defaultValue="hello@beelovedshouse.com"
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="storePhone" className="text-gray-700">Phone Number</Label>
+                    <Input
+                      id="storePhone"
+                      defaultValue="(555) 123-BEES"
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="storeDescription" className="text-gray-700">Store Description</Label>
+                    <Textarea
+                      id="storeDescription"
+                      defaultValue="Creating magical experiences for children through art and storytelling."
+                      rows={3}
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment Settings */}
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-gray-800 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Payment Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="paymentGateway" className="text-gray-700">Payment Gateway</Label>
+                    <Select defaultValue="stripe">
+                      <SelectTrigger className="bg-white/70 border-amber-200 focus:border-amber-400">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="stripe">Stripe</SelectItem>
+                        <SelectItem value="paypal">PayPal</SelectItem>
+                        <SelectItem value="square">Square</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="currency" className="text-gray-700">Currency</Label>
+                    <Select defaultValue="usd">
+                      <SelectTrigger className="bg-white/70 border-amber-200 focus:border-amber-400">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="usd">USD ($)</SelectItem>
+                        <SelectItem value="eur">EUR (€)</SelectItem>
+                        <SelectItem value="gbp">GBP (£)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-gray-700">Test Mode</Label>
+                      <p className="text-sm text-gray-600">Enable for testing payments</p>
+                    </div>
+                    <input type="checkbox" className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Shipping Settings */}
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-gray-800 flex items-center gap-2">
+                    <Truck className="w-5 h-5" />
+                    Shipping Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="freeShipping" className="text-gray-700">Free Shipping Threshold</Label>
+                    <Input
+                      id="freeShipping"
+                      type="number"
+                      defaultValue="50"
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="standardShipping" className="text-gray-700">Standard Shipping Rate</Label>
+                    <Input
+                      id="standardShipping"
+                      type="number"
+                      step="0.01"
+                      defaultValue="5.99"
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="expressShipping" className="text-gray-700">Express Shipping Rate</Label>
+                    <Input
+                      id="expressShipping"
+                      type="number"
+                      step="0.01"
+                      defaultValue="12.99"
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-gray-700">International Shipping</Label>
+                      <p className="text-sm text-gray-600">Allow shipping worldwide</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Marketing Settings */}
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-gray-800 flex items-center gap-2">
+                    <Tag className="w-5 h-5" />
+                    Marketing & Promotions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-gray-700">Email Newsletters</Label>
+                      <p className="text-sm text-gray-600">Send promotional emails</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-gray-700">Abandoned Cart Recovery</Label>
+                      <p className="text-sm text-gray-600">Send reminder emails</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-gray-700">Discount Codes</Label>
+                      <p className="text-sm text-gray-600">Enable promotional codes</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500" />
+                  </div>
+                  <div>
+                    <Label htmlFor="welcomeDiscount" className="text-gray-700">Welcome Discount (%)</Label>
+                    <Input
+                      id="welcomeDiscount"
+                      type="number"
+                      defaultValue="10"
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Admin User Management */}
+            <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-gray-800 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Admin User Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border border-amber-200 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-800">Current Admin</p>
+                      <p className="text-sm text-gray-600">admin@beelovedshouse.com</p>
+                    </div>
+                    <Badge className="bg-amber-100 text-amber-800">Super Admin</Badge>
+                  </div>
+                  <div className="text-center py-4">
+                    <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add New Admin User
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
