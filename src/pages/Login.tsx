@@ -1,57 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Heart, Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { useAuth } from '../contexts/AuthContext';
+import { Alert, AlertDescription } from '../components/ui/alert';
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    displayName: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/profile');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Store user data locally for demo purposes
-    const userData = {
-      id: 'demo-user',
-      email: formData.email,
-      name: 'Demo User',
-      created_at: new Date().toISOString()
-    };
-    localStorage.setItem('user', JSON.stringify(userData));
-    navigate('/profile');
+    setLoading(true);
+    setError('');
+
+    try {
+      await signIn(formData.email, formData.password);
+      // Navigation will happen via useEffect when user state updates
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      if (error.message.includes('auth/user-not-found') || error.message.includes('auth/wrong-password')) {
+        setError('Invalid email or password');
+      } else if (error.message.includes('auth/too-many-requests')) {
+        setError('Too many failed attempts. Please try again later.');
+      } else {
+        setError('An error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
+      setLoading(false);
       return;
     }
-    // Store user data locally for demo purposes
-    const userData = {
-      id: 'demo-user',
-      email: formData.email,
-      name: 'Demo User',
-      created_at: new Date().toISOString()
-    };
-    localStorage.setItem('user', JSON.stringify(userData));
-    navigate('/profile');
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await signUp(formData.email, formData.password, formData.displayName || formData.email.split('@')[0]);
+      // Navigation will happen via useEffect when user state updates
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      if (error.message.includes('auth/email-already-in-use')) {
+        setError('An account with this email already exists');
+      } else if (error.message.includes('auth/weak-password')) {
+        setError('Password is too weak');
+      } else if (error.message.includes('auth/invalid-email')) {
+        setError('Invalid email address');
+      } else {
+        setError('An error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center p-4">
@@ -98,6 +153,15 @@ const Login: React.FC = () => {
             </TabsList>
 
             <TabsContent value="signin" className="space-y-6">
+              {error && (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-700">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email" className="text-gray-700 font-semibold flex items-center gap-2">
@@ -113,6 +177,7 @@ const Login: React.FC = () => {
                     required
                     placeholder="Enter your email"
                     className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400"
+                    disabled={loading}
                   />
                 </div>
 
@@ -131,11 +196,13 @@ const Login: React.FC = () => {
                       required
                       placeholder="Enter your password"
                       className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400 pr-10"
+                      disabled={loading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600 disabled:opacity-50"
+                      disabled={loading}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -144,15 +211,48 @@ const Login: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  Sign In
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Signing In...
+                    </div>
+                  ) : (
+                    'Sign In'
+                  )}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-6">
+              {error && (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-700">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="displayName" className="text-gray-700 font-semibold">
+                    Display Name
+                  </Label>
+                  <Input
+                    id="displayName"
+                    type="text"
+                    name="displayName"
+                    value={formData.displayName}
+                    onChange={handleInputChange}
+                    placeholder="Enter your display name"
+                    className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400"
+                    disabled={loading}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-email" className="text-gray-700 font-semibold flex items-center gap-2">
                     <Mail className="w-4 h-4" />
@@ -167,6 +267,7 @@ const Login: React.FC = () => {
                     required
                     placeholder="Enter your email"
                     className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400"
+                    disabled={loading}
                   />
                 </div>
 
@@ -183,13 +284,15 @@ const Login: React.FC = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      placeholder="Create a password"
+                      placeholder="Create a password (min 6 characters)"
                       className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400 pr-10"
+                      disabled={loading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600 disabled:opacity-50"
+                      disabled={loading}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -211,11 +314,13 @@ const Login: React.FC = () => {
                       required
                       placeholder="Confirm your password"
                       className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400 pr-10"
+                      disabled={loading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600 disabled:opacity-50"
+                      disabled={loading}
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -224,9 +329,17 @@ const Login: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  Create Account
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Creating Account...
+                    </div>
+                  ) : (
+                    'Create Account'
+                  )}
                 </Button>
               </form>
             </TabsContent>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -29,6 +29,7 @@ import {
   Globe
 } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -41,6 +42,7 @@ import { Textarea } from '../components/ui/textarea';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { products, updateInventory, getLowStockProducts } = useAppContext();
+  const { user, userProfile, isAdmin, logout, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [newProduct, setNewProduct] = useState({
     title: '',
@@ -53,16 +55,39 @@ const AdminDashboard: React.FC = () => {
     image: ''
   });
 
-  // Check admin authentication immediately - no loading state
-  const isAuthenticated = localStorage.getItem('adminAuthenticated');
-  if (!isAuthenticated) {
-    navigate('/admin');
+  // Check admin authentication
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) {
+      navigate('/admin');
+    }
+  }, [user, isAdmin, loading, navigate]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated or not admin
+  if (!user || !isAdmin) {
     return null;
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuthenticated');
-    navigate('/admin');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/admin');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/admin');
+    }
   };
 
   const handleAddProduct = (e: React.FormEvent) => {
