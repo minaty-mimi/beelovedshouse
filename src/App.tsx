@@ -28,6 +28,8 @@ import Storybooks from "./pages/Storybooks";
 import TermsOfService from "./pages/TermsOfService";
 import ToteBags from "./pages/ToteBags";
 import Wholesale from "./pages/Wholesale";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const App = () => {
   return (
@@ -60,6 +62,8 @@ const App = () => {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/wholesale" element={<Wholesale />} />
         <Route path="/affiliate-program" element={<AffiliateProgram />} />
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

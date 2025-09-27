@@ -33,11 +33,11 @@ const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ isPopup = false, on
         </button>
       )}
 
-      {/* Floating Hearts */}
+      {/* Floating Hearts - Removed animations to eliminate any loading appearance */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-4 left-8 w-3 h-3 bg-pink-300 rounded-full opacity-60 animate-pulse"></div>
-        <div className="absolute top-12 right-12 w-2 h-2 bg-purple-300 rounded-full opacity-60 animate-bounce"></div>
-        <div className="absolute bottom-8 left-6 w-4 h-4 bg-blue-300 rounded-full opacity-60 animate-pulse delay-300"></div>
+        <div className="absolute top-4 left-8 w-3 h-3 bg-pink-300 rounded-full opacity-60"></div>
+        <div className="absolute top-12 right-12 w-2 h-2 bg-purple-300 rounded-full opacity-60"></div>
+        <div className="absolute bottom-8 left-6 w-4 h-4 bg-blue-300 rounded-full opacity-60"></div>
       </div>
 
       <div className="relative z-10">

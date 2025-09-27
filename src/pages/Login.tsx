@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -8,6 +9,7 @@ const Login: React.FC = () => {
   });
 
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -18,7 +20,16 @@ const Login: React.FC = () => {
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
+    // Store user data locally for demo purposes
+    const userData = {
+      id: 'demo-user',
+      email: formData.email,
+      name: 'Demo User',
+      created_at: new Date().toISOString()
+    };
+    localStorage.setItem('user', JSON.stringify(userData));
     alert('Sign in successful! (Demo only)');
+    navigate('/profile'); // Redirect to profile
   };
 
   const handleSignUp = (e: React.FormEvent) => {
@@ -27,7 +38,16 @@ const Login: React.FC = () => {
       alert('Passwords do not match');
       return;
     }
+    // Store user data locally for demo purposes
+    const userData = {
+      id: 'demo-user',
+      email: formData.email,
+      name: 'Demo User',
+      created_at: new Date().toISOString()
+    };
+    localStorage.setItem('user', JSON.stringify(userData));
     alert('Account created successfully! (Demo only)');
+    navigate('/profile'); // Redirect to profile
   };
 
   return (

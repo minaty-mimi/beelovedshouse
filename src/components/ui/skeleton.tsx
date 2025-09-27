@@ -7,7 +7,7 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 
 function Skeleton({
   className,
-  animated = true,
+  animated = false, // Disabled by default to remove loading appearance
   ...props
 }: SkeletonProps) {
   return (

@@ -7,12 +7,12 @@ const Hero: React.FC = () => {
       id="home"
       className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 overflow-hidden"
     >
-      {/* Floating Elements */}
+      {/* Floating Elements - Removed animations to eliminate any loading appearance */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-6 h-6 bg-yellow-300 rounded-full opacity-60 animate-bounce"></div>
-        <div className="absolute top-40 right-20 w-4 h-4 bg-pink-300 rounded-full opacity-60 animate-pulse"></div>
-        <div className="absolute bottom-40 left-20 w-8 h-8 bg-purple-300 rounded-full opacity-60 animate-bounce delay-300"></div>
-        <div className="absolute bottom-20 right-10 w-5 h-5 bg-blue-300 rounded-full opacity-60 animate-pulse delay-500"></div>
+        <div className="absolute top-20 left-10 w-6 h-6 bg-yellow-300 rounded-full opacity-60"></div>
+        <div className="absolute top-40 right-20 w-4 h-4 bg-pink-300 rounded-full opacity-60"></div>
+        <div className="absolute bottom-40 left-20 w-8 h-8 bg-purple-300 rounded-full opacity-60"></div>
+        <div className="absolute bottom-20 right-10 w-5 h-5 bg-blue-300 rounded-full opacity-60"></div>
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

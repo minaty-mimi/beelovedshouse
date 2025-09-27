@@ -42,6 +42,7 @@ interface AppContextType {
   cartTotal: number;
   cartItemCount: number;
   user: User | null;
+  signOut: () => Promise<void>;
   // Inventory management
   updateInventory: (id: number, newInventory: number) => void;
   isLowStock: (id: number) => boolean;
@@ -64,6 +65,7 @@ const defaultAppContext: AppContextType = {
   cartTotal: 0,
   cartItemCount: 0,
   user: null,
+  signOut: async () => {},
   updateInventory: () => {},
   isLowStock: () => false,
   getLowStockProducts: () => [],
@@ -78,7 +80,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  const products: Product[] = [
+  // Get user from localStorage
+  const getStoredUser = (): User | null => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const [user, setUser] = useState<User | null>(getStoredUser);
+
+  const [productsState, setProductsState] = useState<Product[]>([
     {
       id: 1,
       title: "My Shepherd Dreams Wallpaper Pack",
@@ -161,7 +175,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       inventory: 150,
       lowStockThreshold: 15
     }
-  ];
+  ]);
 
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
@@ -191,7 +205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const isInWishlist = (id: number) => wishlist.includes(id);
 
   const addToCart = (id: number, quantity: number = 1) => {
-    const product = products.find(p => p.id === id);
+    const product = productsState.find(p => p.id === id);
     if (!product) return;
 
     setCart(prev => {
@@ -251,17 +265,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Inventory management
   const updateInventory = (id: number, newInventory: number) => {
-    // In a real app, this would update the database
-    console.log(`Updating inventory for product ${id} to ${newInventory}`);
+    setProductsState(prevProducts =>
+      prevProducts.map(product =>
+        product.id === id
+          ? { ...product, inventory: Math.max(0, newInventory) }
+          : product
+      )
+    );
+    toast({
+      title: "Inventory updated",
+      description: `Product inventory has been updated.`,
+    });
   };
 
   const isLowStock = (id: number) => {
-    const product = products.find(p => p.id === id);
+    const product = productsState.find(p => p.id === id);
     return product ? product.inventory <= product.lowStockThreshold : false;
   };
 
   const getLowStockProducts = () => {
-    return products.filter(product => product.inventory <= product.lowStockThreshold);
+    return productsState.filter(product => product.inventory <= product.lowStockThreshold);
+  };
+
+  // Local sign out function (no backend needed)
+  const signOut = async () => {
+    // Clear any local storage authentication
+    localStorage.removeItem('adminAuthenticated');
+    localStorage.removeItem('user');
+    setUser(null);
+    console.log('User signed out locally');
   };
 
   return (
@@ -269,7 +301,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         sidebarOpen,
         toggleSidebar,
-        products,
+        products: productsState,
         wishlist,
         addToWishlist,
         removeFromWishlist,
@@ -281,7 +313,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearCart,
         cartTotal,
         cartItemCount,
-        user: null,
+        user,
+        signOut,
         updateInventory,
         isLowStock,
         getLowStockProducts,
