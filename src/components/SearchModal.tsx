@@ -11,7 +11,7 @@ interface SearchModalProps {
 }
 
 const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
-  const { products } = useAppContext();
+  const { products, productsLoading } = useAppContext();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState(products);
@@ -69,7 +69,12 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 
         {/* Search Results */}
         <div className="max-h-96 overflow-y-auto">
-          {results.length > 0 ? (
+          {productsLoading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading products...</p>
+            </div>
+          ) : results.length > 0 ? (
             <div className="p-4">
               {results.map(product => (
                 <div

@@ -9,7 +9,7 @@ import { Search } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 const Products: React.FC = () => {
-  const { products } = useAppContext();
+  const { products, productsLoading } = useAppContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
@@ -102,13 +102,19 @@ const Products: React.FC = () => {
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} {...product} />
-              ))}
-            </div>
+            {productsLoading ? (
+              <div className="flex justify-center items-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
+                {filteredProducts.map(product => (
+                  <ProductCard key={product.id} {...product} />
+                ))}
+              </div>
+            )}
 
-            {filteredProducts.length === 0 && (
+            {!productsLoading && filteredProducts.length === 0 && (
               <div className="text-center py-16">
                 <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-xl">
                   <div className="text-6xl mb-4">🔍</div>
