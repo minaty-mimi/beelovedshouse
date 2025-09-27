@@ -8,9 +8,165 @@ export const supabase = supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+// Database types
+export interface Database {
+  public: {
+    Tables: {
+      users: {
+        Row: {
+          id: string
+          email: string
+          name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      products: {
+        Row: {
+          id: number
+          title: string
+          price: number
+          original_price: number | null
+          image: string
+          category: string
+          type: 'digital' | 'physical'
+          inventory: number
+          low_stock_threshold: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          title: string
+          price: number
+          original_price?: number | null
+          image: string
+          category: string
+          type: 'digital' | 'physical'
+          inventory?: number
+          low_stock_threshold?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          title?: string
+          price?: number
+          original_price?: number | null
+          image?: string
+          category?: string
+          type?: 'digital' | 'physical'
+          inventory?: number
+          low_stock_threshold?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      orders: {
+        Row: {
+          id: string
+          user_id: string
+          total_amount: number
+          status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+          shipping_address: any
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          total_amount: number
+          status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+          shipping_address: any
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          total_amount?: number
+          status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+          shipping_address?: any
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          product_id: number
+          quantity: number
+          price: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          product_id: number
+          quantity: number
+          price: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          product_id?: number
+          quantity?: number
+          price?: number
+          created_at?: string
+        }
+      }
+      cart_items: {
+        Row: {
+          id: string
+          user_id: string | null
+          session_id: string
+          product_id: number
+          quantity: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          session_id: string
+          product_id: number
+          quantity?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          session_id?: string
+          product_id?: number
+          quantity?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+    }
+  }
+}
+
 // Mock auth functions with working demo authentication
 const mockAuth = {
-  signUp: async (email: string, password: string) => {
+  signUp: async (email: string, _password: string) => {
     // Simulate successful signup for demo purposes
     const mockUser = {
       id: 'demo-user-' + Date.now(),
@@ -27,7 +183,7 @@ const mockAuth = {
     };
   },
 
-  signIn: async (email: string, password: string) => {
+  signIn: async (email: string, _password: string) => {
     // Simulate successful signin for demo purposes
     const mockUser = {
       id: 'demo-user-' + Date.now(),
