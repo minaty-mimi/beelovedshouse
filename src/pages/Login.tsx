@@ -232,11 +232,6 @@ const Login: React.FC = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="text-center mt-6 pt-6 border-t border-amber-200">
-            <p className="text-sm text-gray-600">
-              ✨ Demo login - No real authentication required ✨
-            </p>
-          </div>
         </div>
       </div>
     </div>
