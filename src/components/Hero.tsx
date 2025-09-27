@@ -1,7 +1,9 @@
 import React from 'react';
 import { ArrowRight, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Hero: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <section 
       id="home"
@@ -31,12 +33,18 @@ const Hero: React.FC = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-            <button className="group bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-300 shadow-lg flex items-center gap-2">
+            <button 
+              onClick={() => navigate('/products')}
+              className="group bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-300 shadow-lg flex items-center gap-2"
+            >
               Shop Now
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
             
-            <button className="group bg-white text-amber-600 border-2 border-amber-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-amber-50 transform hover:scale-105 transition-all duration-300 shadow-lg flex items-center gap-2">
+            <button 
+              onClick={() => navigate('/digital-downloads')}
+              className="group bg-white text-amber-600 border-2 border-amber-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-amber-50 transform hover:scale-105 transition-all duration-300 shadow-lg flex items-center gap-2"
+            >
               <Download className="w-5 h-5" />
               Free Wallpapers
             </button>

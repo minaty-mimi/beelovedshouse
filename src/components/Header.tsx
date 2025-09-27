@@ -48,7 +48,7 @@ const Header: React.FC = () => {
             <div className="relative">
               <Heart 
                 className="w-5 h-5 text-gray-600 hover:text-pink-500 cursor-pointer transition-colors" 
-                onClick={() => navigate('/liked')}
+                onClick={() => navigate('/liked-items')}
               />
               {wishlist.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

@@ -1,7 +1,9 @@
 import React from 'react';
 import { Heart, Instagram, Facebook, Twitter, Mail, Shield, Truck, RotateCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Footer: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <footer className="bg-gray-900 text-white">
       {/* Trust Badges */}
@@ -76,12 +78,12 @@ const Footer: React.FC = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Shop</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Digital Wallpapers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Storybooks</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Coloring Books</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Stickers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Tote Bags</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Card Games</a></li>
+                <li><button onClick={() => navigate('/digital-wallpapers')} className="hover:text-white transition-colors">Digital Wallpapers</button></li>
+                <li><button onClick={() => navigate('/storybooks')} className="hover:text-white transition-colors">Storybooks</button></li>
+                <li><button onClick={() => navigate('/coloring-books')} className="hover:text-white transition-colors">Coloring Books</button></li>
+                <li><button onClick={() => navigate('/stickers')} className="hover:text-white transition-colors">Stickers</button></li>
+                <li><button onClick={() => navigate('/tote-bags')} className="hover:text-white transition-colors">Tote Bags</button></li>
+                <li><button onClick={() => navigate('/card-games')} className="hover:text-white transition-colors">Card Games</button></li>
               </ul>
             </div>
 
@@ -89,12 +91,12 @@ const Footer: React.FC = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Shipping Info</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Returns</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Size Guide</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Digital Downloads</a></li>
+                <li><button onClick={() => navigate('/contact-us')} className="hover:text-white transition-colors">Contact Us</button></li>
+                <li><button onClick={() => navigate('/faq')} className="hover:text-white transition-colors">FAQ</button></li>
+                <li><button onClick={() => navigate('/shipping-info')} className="hover:text-white transition-colors">Shipping Info</button></li>
+                <li><button onClick={() => navigate('/returns')} className="hover:text-white transition-colors">Returns</button></li>
+                <li><button onClick={() => navigate('/size-guide')} className="hover:text-white transition-colors">Size Guide</button></li>
+                <li><button onClick={() => navigate('/digital-downloads')} className="hover:text-white transition-colors">Digital Downloads</button></li>
               </ul>
             </div>
 
@@ -102,12 +104,12 @@ const Footer: React.FC = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Our Story</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Wholesale</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Affiliate Program</a></li>
+                <li><button onClick={() => navigate('/about-us')} className="hover:text-white transition-colors">About Us</button></li>
+                <li><button onClick={() => navigate('/our-story')} className="hover:text-white transition-colors">Our Story</button></li>
+                <li><button onClick={() => navigate('/privacy-policy')} className="hover:text-white transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/terms-of-service')} className="hover:text-white transition-colors">Terms of Service</button></li>
+                <li><button onClick={() => navigate('/wholesale')} className="hover:text-white transition-colors">Wholesale</button></li>
+                <li><button onClick={() => navigate('/affiliate-program')} className="hover:text-white transition-colors">Affiliate Program</button></li>
               </ul>
             </div>
           </div>
