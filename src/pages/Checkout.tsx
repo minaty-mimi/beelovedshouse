@@ -53,155 +53,189 @@ const Checkout: React.FC = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-        <Button onClick={() => navigate('/products')}>Continue Shopping</Button>
+      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100">
+        {/* Floating Elements */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-20 left-10 w-6 h-6 bg-yellow-300 rounded-full opacity-40"></div>
+          <div className="absolute top-40 right-20 w-4 h-4 bg-pink-300 rounded-full opacity-40"></div>
+          <div className="absolute bottom-40 left-20 w-8 h-8 bg-purple-300 rounded-full opacity-40"></div>
+          <div className="absolute bottom-20 right-10 w-5 h-5 bg-blue-300 rounded-full opacity-40"></div>
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 py-8 text-center">
+          <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-xl inline-block">
+            <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
+            <Button onClick={() => navigate('/products')}>Continue Shopping</Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Checkout</h1>
+    <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100">
+      {/* Floating Elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 left-10 w-6 h-6 bg-yellow-300 rounded-full opacity-40"></div>
+        <div className="absolute top-40 right-20 w-4 h-4 bg-pink-300 rounded-full opacity-40"></div>
+        <div className="absolute bottom-40 left-20 w-8 h-8 bg-purple-300 rounded-full opacity-40"></div>
+        <div className="absolute bottom-20 right-10 w-5 h-5 bg-blue-300 rounded-full opacity-40"></div>
+      </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Order Summary */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center mb-4">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.product.title}</h4>
-                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        <h1
+          className="text-4xl font-bold mb-8 text-center text-gray-800"
+          style={{fontFamily: 'Amatic SC, cursive'}}
+        >
+          Checkout
+        </h1>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Order Summary */}
+          <div>
+            <Card className="bg-white/80 backdrop-blur-lg border-amber-200 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-gray-800">Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between items-center mb-4">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-800">{item.product.title}</h4>
+                      <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                    </div>
+                    <span className="font-medium text-gray-900">${(item.product.price * item.quantity).toFixed(2)}</span>
                   </div>
-                  <span className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</span>
+                ))}
+                <Separator className="my-4" />
+                <div className="flex justify-between items-center text-lg font-bold text-gray-900">
+                  <span>Total:</span>
+                  <span>${cartTotal.toFixed(2)}</span>
                 </div>
-              ))}
-              <Separator className="my-4" />
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>Total:</span>
-                <span>${cartTotal.toFixed(2)}</span>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Features */}
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <div className="text-center">
-              <Truck className="mx-auto mb-2" size={24} />
-              <p className="text-sm">Free Shipping</p>
-            </div>
-            <div className="text-center">
-              <Shield className="mx-auto mb-2" size={24} />
-              <p className="text-sm">Secure Payment</p>
-            </div>
-            <div className="text-center">
-              <CreditCard className="mx-auto mb-2" size={24} />
-              <p className="text-sm">Easy Returns</p>
+            {/* Features */}
+            <div className="grid grid-cols-3 gap-4 mt-6">
+              <div className="text-center bg-white/80 backdrop-blur-lg rounded-3xl p-4 shadow-xl">
+                <Truck className="mx-auto mb-2 text-amber-600" size={24} />
+                <p className="text-sm font-medium text-gray-800">Free Shipping</p>
+              </div>
+              <div className="text-center bg-white/80 backdrop-blur-lg rounded-3xl p-4 shadow-xl">
+                <Shield className="mx-auto mb-2 text-amber-600" size={24} />
+                <p className="text-sm font-medium text-gray-800">Secure Payment</p>
+              </div>
+              <div className="text-center bg-white/80 backdrop-blur-lg rounded-3xl p-4 shadow-xl">
+                <CreditCard className="mx-auto mb-2 text-amber-600" size={24} />
+                <p className="text-sm font-medium text-gray-800">Easy Returns</p>
+              </div>
             </div>
           </div>
+
+          {/* Checkout Form */}
+          <Card className="bg-white/80 backdrop-blur-lg border-amber-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-gray-800">Shipping Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName" className="text-gray-700 font-semibold">First Name</Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName" className="text-gray-700 font-semibold">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="email" className="text-gray-700 font-semibold">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-white/70 border-amber-200 focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="address" className="text-gray-700 font-semibold">Address</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-white/70 border-amber-200 focus:border-amber-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="city" className="text-gray-700 font-semibold">City</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zipCode" className="text-gray-700 font-semibold">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      name="zipCode"
+                      value={formData.zipCode}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-white/70 border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="country" className="text-gray-700 font-semibold">Country</Label>
+                  <Input
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-white/70 border-amber-200 focus:border-amber-400"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3"
+                >
+                  Pay ${cartTotal.toFixed(2)}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Checkout Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Shipping Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="zipCode">ZIP Code</Label>
-                  <Input
-                    id="zipCode"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-              >
-                Pay ${cartTotal.toFixed(2)}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

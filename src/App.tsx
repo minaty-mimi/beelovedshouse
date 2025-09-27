@@ -1,5 +1,6 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { initializeDatabase } from "./lib/database-init";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AboutUs from "./pages/AboutUs";
@@ -30,8 +31,14 @@ import ToteBags from "./pages/ToteBags";
 import Wholesale from "./pages/Wholesale";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import Support from "./pages/Support";
+import Company from "./pages/Company";
 
 const App = () => {
+  useEffect(() => {
+    initializeDatabase();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -62,6 +69,8 @@ const App = () => {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/wholesale" element={<Wholesale />} />
         <Route path="/affiliate-program" element={<AffiliateProgram />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/company" element={<Company />} />
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="*" element={<NotFound />} />

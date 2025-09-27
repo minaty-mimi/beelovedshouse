@@ -24,7 +24,7 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
 
     // Simple admin authentication (in production, use proper authentication)
-    if (credentials.email === 'admin@beelovedshouse.com' && credentials.password === 'admin2025') {
+    if (credentials.email === 'admin@beelovedshouse.com' && credentials.password === 'Beeloved@1#') {
       localStorage.setItem('adminAuthenticated', 'true');
       navigate('/admin/dashboard');
     } else {

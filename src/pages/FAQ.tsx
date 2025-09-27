@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import { Button } from '../components/ui/button';
+import { ChevronDown, ChevronUp, HelpCircle, Mail, MessageCircle, ArrowLeft } from 'lucide-react';
 
 const FAQ: React.FC = () => {
+  const navigate = useNavigate();
   const [openItems, setOpenItems] = useState<number[]>([]);
 
   const toggleItem = (index: number) => {
@@ -47,123 +53,127 @@ const FAQ: React.FC = () => {
   ];
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f9fafb',
-      padding: '2rem'
-    }}>
-      <div style={{
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
-        <h1 style={{
-          fontSize: '2.5rem',
-          fontWeight: 'bold',
-          color: '#111827',
-          marginBottom: '1rem',
-          textAlign: 'center'
-        }}>
-          Frequently Asked Questions
-        </h1>
-        <p style={{
-          fontSize: '1.125rem',
-          color: '#6b7280',
-          textAlign: 'center',
-          marginBottom: '3rem'
-        }}>
-          Find answers to common questions about our products and services
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100">
+      {/* Floating Elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 left-10 w-6 h-6 bg-yellow-300 rounded-full opacity-40"></div>
+        <div className="absolute top-40 right-20 w-4 h-4 bg-pink-300 rounded-full opacity-40"></div>
+        <div className="absolute bottom-40 left-20 w-8 h-8 bg-purple-300 rounded-full opacity-40"></div>
+        <div className="absolute bottom-20 right-10 w-5 h-5 bg-blue-300 rounded-full opacity-40"></div>
+      </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden'
-        }}>
-          {faqs.map((faq, index) => (
-            <div key={index} style={{
-              borderBottom: index < faqs.length - 1 ? '1px solid #e5e7eb' : 'none'
-            }}>
-              <button
-                onClick={() => toggleItem(index)}
-                style={{
-                  width: '100%',
-                  padding: '1.5rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  outline: 'none'
-                }}
+      <div className="relative z-10">
+        <Header />
+
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/')}
+                className="mb-6 border-amber-200 text-amber-700 hover:bg-amber-50"
               >
-                <span style={{
-                  fontSize: '1.125rem',
-                  fontWeight: '600',
-                  color: '#111827'
-                }}>
-                  {faq.question}
-                </span>
-                <span style={{
-                  fontSize: '1.5rem',
-                  color: '#6b7280',
-                  transform: openItems.includes(index) ? 'rotate(45deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s'
-                }}>
-                  +
-                </span>
-              </button>
-              {openItems.includes(index) && (
-                <div style={{
-                  padding: '0 1.5rem 1.5rem 1.5rem',
-                  color: '#6b7280',
-                  lineHeight: '1.6'
-                }}>
-                  {faq.answer}
-                </div>
-              )}
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back to Home
+              </Button>
+
+              <h1
+                className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
+                style={{fontFamily: 'Amatic SC, cursive'}}
+              >
+                Frequently Asked Questions
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+                Find answers to common questions about our products and services
+              </p>
             </div>
-          ))}
+
+            <div className="space-y-6">
+              {/* FAQ Items */}
+              <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-amber-200 overflow-hidden">
+                {faqs.map((faq, index) => (
+                  <div key={index} className="border-b border-amber-100 last:border-b-0">
+                    <button
+                      onClick={() => toggleItem(index)}
+                      className="w-full px-8 py-6 text-left flex justify-between items-center hover:bg-amber-50/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-300 rounded-t-3xl"
+                    >
+                      <span className="text-lg font-semibold text-gray-800 pr-4">
+                        {faq.question}
+                      </span>
+                      {openItems.includes(index) ? (
+                        <ChevronUp className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                      )}
+                    </button>
+                    {openItems.includes(index) && (
+                      <div className="px-8 pb-6 text-gray-600 leading-relaxed">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Help Section */}
+              <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-3xl p-8 text-white shadow-xl">
+                <div className="text-center">
+                  <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-90" />
+                  <h2 className="text-3xl font-bold mb-4" style={{fontFamily: 'Amatic SC, cursive'}}>
+                    Still have questions?
+                  </h2>
+                  <p className="text-lg mb-6 opacity-90">
+                    Can't find what you're looking for? We're here to help!
+                  </p>
+
+                  <div className="grid md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6">
+                      <Mail className="w-8 h-8 mx-auto mb-3" />
+                      <h3 className="font-semibold mb-2">Email Support</h3>
+                      <p className="text-sm opacity-90">Get detailed help via email</p>
+                      <Button
+                        onClick={() => navigate('/contact')}
+                        className="mt-3 bg-white text-amber-600 hover:bg-gray-100 font-semibold"
+                      >
+                        Contact Us
+                      </Button>
+                    </div>
+
+                    <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6">
+                      <MessageCircle className="w-8 h-8 mx-auto mb-3" />
+                      <h3 className="font-semibold mb-2">Live Chat</h3>
+                      <p className="text-sm opacity-90">Chat with our support team</p>
+                      <Button
+                        onClick={() => navigate('/support')}
+                        className="mt-3 bg-white text-amber-600 hover:bg-gray-100 font-semibold"
+                      >
+                        Start Chat
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button
+                      onClick={() => navigate('/products')}
+                      className="bg-white text-amber-600 hover:bg-gray-100 font-semibold px-8"
+                    >
+                      Browse Products
+                    </Button>
+                    <Button
+                      onClick={() => navigate('/shipping-info')}
+                      variant="outline"
+                      className="border-white text-white hover:bg-white hover:text-amber-600 px-8"
+                    >
+                      Shipping Info
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div style={{
-          marginTop: '3rem',
-          textAlign: 'center',
-          padding: '2rem',
-          backgroundColor: 'white',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-        }}>
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            color: '#111827',
-            marginBottom: '1rem'
-          }}>
-            Still have questions?
-          </h2>
-          <p style={{
-            color: '#6b7280',
-            marginBottom: '1.5rem'
-          }}>
-            Can't find what you're looking for? We're here to help!
-          </p>
-          <button style={{
-            padding: '0.75rem 2rem',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.375rem',
-            fontSize: '1rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            outline: 'none'
-          }}>
-            Contact Support
-          </button>
-        </div>
+        <Footer />
       </div>
     </div>
   );
