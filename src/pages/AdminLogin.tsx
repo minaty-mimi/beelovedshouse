@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Shield, Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { useAuth } from '../contexts/AuthContext';
+import { Alert, AlertDescription } from '../components/ui/alert';
 
 const AdminLogin: React.FC = () => {
   const [credentials, setCredentials] = useState({
@@ -11,26 +13,85 @@ const AdminLogin: React.FC = () => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn, isAdmin, user, loading: authLoading } = useAuth();
+
+  // Redirect if already authenticated and is admin
+  useEffect(() => {
+    if (!authLoading && user && isAdmin) {
+      navigate('/admin/dashboard');
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({
       ...credentials,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
 
-    // Simple admin authentication (in production, use proper authentication)
-    if (credentials.email === 'admin@beelovedshouse.com' && credentials.password === 'Beeloved@1#') {
-      localStorage.setItem('adminAuthenticated', 'true');
-      navigate('/admin/dashboard');
-    } else {
-      alert('Invalid credentials. Please try again.');
+    try {
+      await signIn(credentials.email, credentials.password);
+
+      // Check if user has admin role (this will be handled by the auth context)
+      // If not admin, they'll be redirected back here
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.message.includes('auth/user-not-found') || error.message.includes('auth/wrong-password')) {
+        setError('Invalid email or password');
+      } else if (error.message.includes('auth/too-many-requests')) {
+        setError('Too many failed attempts. Please try again later.');
+      } else {
+        setError('An error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated but not admin, show access denied
+  if (user && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-red-50 border border-red-200 rounded-3xl p-8">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h1>
+            <p className="text-gray-600 mb-6">
+              You don't have admin privileges. Please contact an administrator if you believe this is an error.
+            </p>
+            <Button
+              onClick={() => navigate('/')}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+            >
+              Back to Store
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center p-4">
@@ -59,6 +120,15 @@ const AdminLogin: React.FC = () => {
 
         {/* Login Form */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-xl border border-white/50">
+          {error && (
+            <Alert className="mb-6 border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-700">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-700 font-semibold flex items-center gap-2">
@@ -74,6 +144,7 @@ const AdminLogin: React.FC = () => {
                 required
                 placeholder="admin@beelovedshouse.com"
                 className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400"
+                disabled={loading}
               />
             </div>
 
@@ -92,11 +163,13 @@ const AdminLogin: React.FC = () => {
                   required
                   placeholder="Enter your password"
                   className="bg-white/70 border-amber-200 focus:border-amber-400 focus:ring-amber-400 pr-10"
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600 disabled:opacity-50"
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -105,9 +178,17 @@ const AdminLogin: React.FC = () => {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Access Dashboard
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Signing In...
+                </div>
+              ) : (
+                'Access Dashboard'
+              )}
             </Button>
           </form>
 

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { initializeDatabase } from "./lib/database-init";
+import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -34,6 +35,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Support from "./pages/Support";
 import Company from "./pages/Company";
+import CreateAdmin from "./pages/CreateAdmin";
 
 const App = () => {
   useEffect(() => {
@@ -41,43 +43,46 @@ const App = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/about-us" element={<AboutUs />} />
-        <Route path="/our-story" element={<OurStory />} />
-        <Route path="/contact-us" element={<ContactUs />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
-        <Route path="/digital-wallpapers" element={<DigitalWallpapers />} />
-        <Route path="/storybooks" element={<Storybooks />} />
-        <Route path="/coloring-books" element={<ColoringBooks />} />
-        <Route path="/stickers" element={<Stickers />} />
-        <Route path="/tote-bags" element={<ToteBags />} />
-        <Route path="/card-games" element={<CardGames />} />
-        <Route path="/digital-downloads" element={<DigitalDownloads />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/checkout/success" element={<CheckoutSuccess />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/liked-items" element={<LikedItems />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/shipping-info" element={<ShippingInfo />} />
-        <Route path="/returns" element={<Returns />} />
-        <Route path="/size-guide" element={<SizeGuide />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/wholesale" element={<Wholesale />} />
-        <Route path="/affiliate-program" element={<AffiliateProgram />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/company" element={<Company />} />
-        <Route path="/admin" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/our-story" element={<OurStory />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/digital-wallpapers" element={<DigitalWallpapers />} />
+          <Route path="/storybooks" element={<Storybooks />} />
+          <Route path="/coloring-books" element={<ColoringBooks />} />
+          <Route path="/stickers" element={<Stickers />} />
+          <Route path="/tote-bags" element={<ToteBags />} />
+          <Route path="/card-games" element={<CardGames />} />
+          <Route path="/digital-downloads" element={<DigitalDownloads />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/liked-items" element={<LikedItems />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/shipping-info" element={<ShippingInfo />} />
+          <Route path="/returns" element={<Returns />} />
+          <Route path="/size-guide" element={<SizeGuide />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/wholesale" element={<Wholesale />} />
+          <Route path="/affiliate-program" element={<AffiliateProgram />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/company" element={<Company />} />
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/create-admin" element={<CreateAdmin />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 
