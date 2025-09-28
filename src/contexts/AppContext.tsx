@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '../lib/supabase';
 import { cartOperations, sessionManager } from '../lib/database';
+import { useAuth } from './AuthContext';
 
 export interface Product {
   id: number;
@@ -13,6 +14,7 @@ export interface Product {
   type: 'digital' | 'physical';
   inventory: number; // Stock quantity
   low_stock_threshold: number; // Alert when stock drops below this
+  description?: string; // Product description
   created_at?: string;
   updated_at?: string;
 }
@@ -21,6 +23,13 @@ export interface CartItem {
   id: number;
   product: Product;
   quantity: number;
+}
+
+interface CartDataItem {
+  id: string;
+  quantity: number;
+  product_id: number;
+  products: Product | null;
 }
 
 export interface User {
@@ -87,6 +96,7 @@ const AppContext = createContext<AppContextType>(defaultAppContext);
 export const useAppContext = () => useContext(AppContext);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user: firebaseUser, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -95,17 +105,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [cartLoading, setCartLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string>('');
 
-  // Get user from localStorage
-  const getStoredUser = (): User | null => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const [user, setUser] = useState<User | null>(getStoredUser);
+  // Convert Firebase User to AppContext User format
+  const user: User | null = firebaseUser ? {
+    id: firebaseUser.uid,
+    email: firebaseUser.email || '',
+    name: firebaseUser.displayName || undefined,
+    created_at: undefined // Firebase doesn't provide this directly
+  } : null;
 
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
@@ -116,94 +122,219 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       setProductsLoading(true);
 
-      if (!supabase) {
-        console.warn('Supabase client not available');
-        setProductsLoading(false);
-        return;
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading products:', error);
+          // Fall back to sample data
+          loadSampleProducts();
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setProducts(data);
+          return;
+        }
       }
 
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading products:', error);
-        return;
-      }
-
-      if (data) {
-        setProducts(data);
-      }
+      // Fall back to sample data if no Supabase or no data
+      loadSampleProducts();
     } catch (error) {
       console.error('Error loading products:', error);
+      loadSampleProducts();
     } finally {
       setProductsLoading(false);
     }
+  };
+
+  // Load sample products for fallback
+  const loadSampleProducts = () => {
+    const sampleProducts: Product[] = [
+      {
+        id: 1,
+        title: 'Digital Wallpaper - Love Theme',
+        price: 1500,
+        original_price: 2000,
+        image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400',
+        category: 'Digital Products',
+        type: 'digital',
+        inventory: 100,
+        low_stock_threshold: 10,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        description: 'Beautiful digital wallpaper featuring pastoral love themes from "My Shepherd and I". Perfect for phone and desktop backgrounds.'
+      },
+      {
+        id: 2,
+        title: 'Storybook - The Shepherd\'s Love',
+        price: 15000,
+        original_price: 18000,
+        image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400',
+        category: 'Books',
+        type: 'physical',
+        inventory: 50,
+        low_stock_threshold: 5,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        description: 'Heartwarming storybook about love and faith, beautifully illustrated for children and families.'
+      },
+      {
+        id: 3,
+        title: 'Coloring Book - Faith & Love',
+        price: 10000,
+        original_price: 12000,
+        image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400',
+        category: 'Books',
+        type: 'physical',
+        inventory: 75,
+        low_stock_threshold: 8,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        description: 'Interactive coloring book with faith-based themes and pastoral illustrations.'
+      },
+      {
+        id: 4,
+        title: 'Custom Sticker Pack',
+        price: 8000,
+        original_price: 10000,
+        image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400',
+        category: 'Accessories',
+        type: 'physical',
+        inventory: 200,
+        low_stock_threshold: 20,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        description: 'Pack of 10 custom stickers with love and faith messages, perfect for laptops and water bottles.'
+      },
+      {
+        id: 5,
+        title: 'Tote Bag - Love & Faith',
+        price: 25000,
+        original_price: 30000,
+        image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+        category: 'Accessories',
+        type: 'physical',
+        inventory: 30,
+        low_stock_threshold: 5,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        description: 'High-quality canvas tote bag with custom love and faith design. Eco-friendly and durable.'
+      },
+      {
+        id: 6,
+        title: 'Card Game - Faith Family Fun',
+        price: 20000,
+        original_price: 25000,
+        image: 'https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=400',
+        category: 'Games',
+        type: 'physical',
+        inventory: 40,
+        low_stock_threshold: 5,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        description: 'Family-friendly card game promoting faith, love, and family values through interactive play.'
+      }
+    ];
+
+    setProducts(sampleProducts);
   };
 
   // Set up real-time subscriptions
   const setupRealtimeSubscriptions = () => {
     if (!supabase) return;
 
-    // Subscribe to products table changes
-    const productsChannel = supabase
-      .channel('products_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'products'
-        },
-        (payload) => {
-          console.log('Products real-time update:', payload);
-          // Reload products when any change occurs
-          loadProducts();
-        }
-      )
-      .subscribe();
+    let productsChannel: any = null;
+    let ordersChannel: any = null;
+    let cartChannel: any = null;
 
-    // Subscribe to orders table changes (for admin dashboard)
-    const ordersChannel = supabase
-      .channel('orders_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders'
-        },
-        (payload) => {
-          console.log('Orders real-time update:', payload);
-          // Orders will be handled by individual components that need them
-        }
-      )
-      .subscribe();
+    try {
+      // Subscribe to products table changes
+      productsChannel = supabase
+        .channel('products_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'products'
+          },
+          (payload) => {
+            console.log('Products real-time update:', payload);
+            // Debounce product reloads to prevent excessive calls
+            setTimeout(() => {
+              loadProducts();
+            }, 100);
+          }
+        )
+        .subscribe((status) => {
+          console.log('Products subscription status:', status);
+        });
 
-    // Subscribe to cart_items table changes (for cart synchronization)
-    const cartChannel = supabase
-      .channel('cart_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'cart_items'
-        },
-        (payload) => {
-          console.log('Cart real-time update:', payload);
-          // Reload cart when changes occur
-          loadCart();
-        }
-      )
-      .subscribe();
+      // Subscribe to orders table changes (for admin dashboard)
+      ordersChannel = supabase
+        .channel('orders_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders'
+          },
+          (payload) => {
+            console.log('Orders real-time update:', payload);
+            // Orders will be handled by individual components that need them
+          }
+        )
+        .subscribe((status) => {
+          console.log('Orders subscription status:', status);
+        });
+
+      // Subscribe to cart_items table changes (for cart synchronization)
+      cartChannel = supabase
+        .channel('cart_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'cart_items'
+          },
+          (payload) => {
+            console.log('Cart real-time update:', payload);
+            // Only reload cart if the change is relevant to current user/session
+            const currentSessionId = sessionManager.getSessionId();
+            const payloadData = payload.new as any;
+            if (payloadData?.user_id === user?.id || payloadData?.session_id === currentSessionId) {
+              setTimeout(() => {
+                loadCart();
+              }, 100);
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('Cart subscription status:', status);
+        });
+
+    } catch (error) {
+      console.error('Error setting up real-time subscriptions:', error);
+    }
 
     // Return cleanup function
     return () => {
-      supabase.removeChannel(productsChannel);
-      supabase.removeChannel(ordersChannel);
-      supabase.removeChannel(cartChannel);
+      if (supabase) {
+        try {
+          if (productsChannel) supabase.removeChannel(productsChannel);
+          if (ordersChannel) supabase.removeChannel(ordersChannel);
+          if (cartChannel) supabase.removeChannel(cartChannel);
+          console.log('Real-time subscriptions cleaned up');
+        } catch (error) {
+          console.error('Error cleaning up subscriptions:', error);
+        }
+      }
     };
   };
 
@@ -226,20 +357,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     const cleanup = setupRealtimeSubscriptions();
     return cleanup; // Cleanup subscriptions on unmount
-  }, []);
+  }, [user]); // Re-setup when user changes
 
-  // Load cart from database
+  // Load cart from database or localStorage
   const loadCart = async () => {
     try {
       setCartLoading(true);
       const currentSessionId = sessionManager.getSessionId();
       const cartData = await cartOperations.loadCartItems(user?.id || null, currentSessionId);
 
-      const formattedCart: CartItem[] = cartData.map(item => ({
-        id: item.product_id,
-        product: item.products,
-        quantity: item.quantity
-      }));
+      const formattedCart: CartItem[] = cartData.map((item: CartDataItem) => {
+        // If item has products data (from Supabase), use it
+        if (item.products) {
+          return {
+            id: item.product_id,
+            product: item.products,
+            quantity: item.quantity
+          };
+        }
+        // Otherwise, find product from local products array (localStorage fallback)
+        const product = products.find(p => p.id === item.product_id);
+        return {
+          id: item.product_id,
+          product: product || {
+            id: item.product_id,
+            title: 'Unknown Product',
+            price: 0,
+            image: '',
+            category: 'Unknown',
+            type: 'physical' as const
+          },
+          quantity: item.quantity
+        };
+      });
 
       setCart(formattedCart);
     } catch (error) {
@@ -263,7 +413,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
     transferCart();
-  }, [user?.id]); // Only run when user ID changes
+  }, [firebaseUser?.uid]); // Only run when user ID changes
 
   const addToWishlist = (id: number) => {
     setWishlist(prev => {
@@ -428,15 +578,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadProducts();
   };
 
-  // Local sign out function (no backend needed)
-  const signOut = async () => {
-    // Clear any local storage authentication
-    localStorage.removeItem('adminAuthenticated');
-    localStorage.removeItem('user');
-    setUser(null);
-    console.log('User signed out locally');
-  };
-
   return (
     <AppContext.Provider
       value={{
@@ -457,7 +598,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cartTotal,
         cartItemCount,
         user,
-        signOut,
+        signOut: logout,
         updateInventory,
         isLowStock,
         getLowStockProducts,

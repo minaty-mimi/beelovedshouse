@@ -12,7 +12,7 @@ import { trackProductView, trackAddToCart, trackEvent } from '@/utils/analytics'
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products, isInWishlist, addToWishlist, removeFromWishlist, addToCart } = useAppContext();
+  const { products, isInWishlist, addToWishlist, removeFromWishlist, addToCart, productsLoading } = useAppContext();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -25,6 +25,22 @@ const ProductDetail: React.FC = () => {
     }
   }, [product]);
 
+  // Show loading state while products are loading
+  if (productsLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading product...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen bg-white">
@@ -32,6 +48,7 @@ const ProductDetail: React.FC = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Product Not Found</h1>
+            <p className="text-gray-600 mb-6">The product you're looking for doesn't exist or may have been removed.</p>
             <Button onClick={() => navigate('/')}>Back to Home</Button>
           </div>
         </div>
@@ -120,13 +137,13 @@ const ProductDetail: React.FC = () => {
                 <span className="text-3xl font-bold text-gray-900">
                   ₦{product.price.toLocaleString()}
                 </span>
-                {product.originalPrice && (
+                {product.original_price && (
                   <>
                     <span className="text-xl text-gray-500 line-through">
-                      ₦{product.originalPrice.toLocaleString()}
+                      ₦{product.original_price.toLocaleString()}
                     </span>
                     <Badge variant="destructive">
-                      Save ₦{(product.originalPrice - product.price).toLocaleString()}
+                      Save ₦{(product.original_price - product.price).toLocaleString()}
                     </Badge>
                   </>
                 )}
@@ -145,8 +162,8 @@ const ProductDetail: React.FC = () => {
               {/* Description */}
               <div className="space-y-4">
                 <p className="text-gray-700 leading-relaxed">
-                  A beautiful {product.type} product featuring adorable artwork from "My Shepherd and I".
-                  Perfect for {product.category.toLowerCase()} lovers who appreciate heartwarming, pastoral themes.
+                  {product.description || `A beautiful ${product.type} product featuring adorable artwork from "My Shepherd and I".
+                  Perfect for ${product.category.toLowerCase()} lovers who appreciate heartwarming, pastoral themes.`}
                 </p>
 
                 {product.type === 'digital' && (

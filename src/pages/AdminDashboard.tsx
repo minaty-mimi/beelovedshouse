@@ -37,13 +37,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
+import { FileUpload } from '../components/FileUpload';
 import { supabase } from '../lib/supabase';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { products, productsLoading, updateInventory, getLowStockProducts } = useAppContext();
   const { user, userProfile, isAdmin, logout, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [showPreview, setShowPreview] = useState(false);
   const [newProduct, setNewProduct] = useState({
     title: '',
     price: '',
@@ -52,7 +53,8 @@ const AdminDashboard: React.FC = () => {
     type: 'digital' as 'digital' | 'physical',
     inventory: '',
     low_stock_threshold: '',
-    image: ''
+    image: '',
+    description: ''
   });
   const [orders, setOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
@@ -168,7 +170,8 @@ const AdminDashboard: React.FC = () => {
       type: 'digital',
       inventory: '',
       low_stock_threshold: '',
-      image: ''
+      image: '',
+      description: ''
     });
   };
 
@@ -539,18 +542,46 @@ const AdminDashboard: React.FC = () => {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label htmlFor="image" className="text-gray-700">Image URL</Label>
-                    <Input
-                      id="image"
-                      value={newProduct.image}
-                      onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
-                      placeholder="https://..."
-                      required
+                    <Label htmlFor="description" className="text-gray-700">Product Description</Label>
+                    <Textarea
+                      id="description"
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                      placeholder="Describe your product in detail..."
+                      rows={4}
                       className="bg-white/70 border-amber-200 focus:border-amber-400"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                    <Label htmlFor="image" className="text-gray-700">Product Image</Label>
+                    <FileUpload
+                      onUploadSuccess={(url, fileName) => {
+                        setNewProduct({...newProduct, image: url});
+                      }}
+                      onUploadError={(error) => {
+                        console.error('Upload error:', error);
+                      }}
+                      maxSizeInMB={5}
+                      path="products"
+                      label="Upload Product Image"
+                      className="mt-2"
+                    />
+                    {newProduct.image && (
+                      <p className="text-sm text-green-600 mt-2">✓ Image uploaded successfully</p>
+                    )}
+                  </div>
+                  <div className="md:col-span-2 flex gap-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowPreview(true)}
+                      className="flex-1 border-amber-200 text-amber-700 hover:bg-amber-50"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview Product
+                    </Button>
+
+                    <Button type="submit" className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
                       <Upload className="w-4 h-4 mr-2" />
                       Add Product
                     </Button>
@@ -916,6 +947,106 @@ const AdminDashboard: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Product Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Product Preview</h2>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowPreview(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Preview Header */}
+                <div>
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-2 ${
+                    newProduct.type === 'digital' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {newProduct.type === 'digital' ? 'Digital Download' : 'Physical Product'}
+                  </span>
+                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    {newProduct.title || 'Product Title'}
+                  </h1>
+                  <p className="text-gray-600">{newProduct.category || 'Category'}</p>
+                </div>
+
+                {/* Preview Price */}
+                <div className="flex items-center gap-4">
+                  <span className="text-2xl font-bold text-gray-900">
+                    ₦{newProduct.price || '0'}
+                  </span>
+                  {newProduct.originalPrice && (
+                    <>
+                      <span className="text-xl text-gray-500 line-through">
+                        ₦{newProduct.originalPrice}
+                      </span>
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">
+                        Save ₦{(parseFloat(newProduct.originalPrice) - parseFloat(newProduct.price || '0')).toLocaleString()}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Preview Image */}
+                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 max-w-sm mx-auto">
+                  {newProduct.image ? (
+                    <img
+                      src={newProduct.image}
+                      alt={newProduct.title || 'Product'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Eye className="w-12 h-12" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview Description */}
+                <div className="space-y-4">
+                  <p className="text-gray-700 leading-relaxed">
+                    {newProduct.description || 'No description provided. A beautiful product featuring artwork from "My Shepherd and I".'}
+                  </p>
+
+                  {newProduct.type === 'digital' && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-blue-800 mb-2">Digital Product Details</h3>
+                      <ul className="text-blue-700 text-sm space-y-1">
+                        <li>• High-resolution images</li>
+                        <li>• Instant download after purchase</li>
+                        <li>• Multiple formats available</li>
+                        <li>• Commercial use license included</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {newProduct.type === 'physical' && (
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-green-800 mb-2">Physical Product Details</h3>
+                      <ul className="text-green-700 text-sm space-y-1">
+                        <li>• Premium quality materials</li>
+                        <li>• Carefully packaged</li>
+                        <li>• Free shipping on orders over ₦50,000</li>
+                        <li>• 30-day return policy</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

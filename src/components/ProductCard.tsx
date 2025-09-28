@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Heart, ShoppingBag, Eye, Download } from 'lucide-react';
+import React from 'react';
+import { Heart } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { trackAddToCart, trackEvent } from '@/utils/analytics';
@@ -25,7 +25,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const { isInWishlist, addToWishlist, removeFromWishlist, addToCart } = useAppContext();
   const navigate = useNavigate();
-  const [isHovered, setIsHovered] = useState(false);
 
   const wishlisted = isInWishlist(id);
 
@@ -50,15 +49,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
-  const handleViewDetails = () => {
-    navigate(`/product/${id}`);
+  const handleViewDetails = (e: React.MouseEvent) => {
+    // Only navigate on left click (button 0), allow right-click context menu
+    if (e.button === 0) {
+      navigate(`/product/${id}`);
+    }
   };
 
   return (
     <div 
       className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={handleViewDetails}
     >
       {/* Product Image */}
@@ -79,39 +79,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {type === 'digital' ? 'Digital' : 'Physical'}
         </div>
 
-        {/* Wishlist Button */}
+        {/* Wishlist Button - More Prominent */}
         <button
           onClick={handleWishlist}
-          className="absolute top-3 right-3 p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors"
+          className={`absolute top-3 right-3 p-2 rounded-full shadow-md transition-all duration-200 ${
+            wishlisted 
+              ? 'bg-pink-500 text-white hover:bg-pink-600' 
+              : 'bg-white/90 text-gray-600 hover:bg-white hover:text-pink-500'
+          }`}
         >
           <Heart 
-            className={`w-4 h-4 transition-colors ${
-              wishlisted ? 'text-pink-500 fill-pink-500' : 'text-gray-600'
+            className={`w-5 h-5 transition-all duration-200 ${
+              wishlisted ? 'fill-white' : ''
             }`} 
           />
         </button>
-
-        {/* Hover Actions */}
-        {isHovered && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-all duration-300">
-            <button
-              onClick={(e) => { e.stopPropagation(); handleViewDetails(); }}
-              className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-            >
-              <Eye className="w-5 h-5 text-gray-700" />
-            </button>
-            <button
-              onClick={handleAddToCart}
-              className="p-3 bg-amber-500 text-white rounded-full shadow-lg hover:bg-amber-600 transition-colors"
-            >
-              {type === 'digital' ? (
-                <Download className="w-5 h-5" />
-              ) : (
-                <ShoppingBag className="w-5 h-5" />
-              )}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Product Info */}
@@ -142,6 +124,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           )}
         </div>
+
+        {/* Buy Button - Always Visible */}
+        <button
+          onClick={handleAddToCart}
+          className="w-full mt-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+        >
+          {type === 'digital' ? 'Download Now' : 'Add to Cart'}
+        </button>
       </div>
     </div>
   );

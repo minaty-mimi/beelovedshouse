@@ -8,16 +8,10 @@ import { Separator } from '../components/ui/separator';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Truck, Shield } from 'lucide-react';
 import { orderOperations } from '../lib/database';
-import { paymentService } from '../lib/paystack';
-
-// Initialize Stripe (replace with your publishable key)
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
-  : null;
-
-const Checkout: React.FC = () => {
+import { paymentService } from '../lib/paystack';const Checkout: React.FC = () => {
   const { cart, cartTotal, clearCart, user } = useAppContext();
   const navigate = useNavigate();
+  const [isGuestCheckout, setIsGuestCheckout] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -25,7 +19,7 @@ const Checkout: React.FC = () => {
     address: '',
     city: '',
     zipCode: '',
-    country: 'US'
+    country: 'NG'
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,9 +32,9 @@ const Checkout: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
-      alert('Please sign in to place an order');
-      navigate('/auth');
+    // Validate guest checkout selection
+    if (!user && !isGuestCheckout) {
+      alert('Please sign in or select guest checkout to continue.');
       return;
     }
 
@@ -56,9 +50,12 @@ const Checkout: React.FC = () => {
         country: formData.country
       };
 
-      // Create the order first (without payment)
+      // Use guest email as identifier for guest orders
+      const orderUserId = user ? user.id : `guest_${formData.email}_${Date.now()}`;
+
+      // Create the order (works for both authenticated and guest users)
       const order = await orderOperations.createOrder(
-        user.id,
+        orderUserId,
         cart,
         shippingAddress,
         cartTotal
@@ -98,7 +95,8 @@ const Checkout: React.FC = () => {
                   orderId: order.id,
                   orderTotal: cartTotal,
                   shippingAddress,
-                  paymentReference: reference
+                  paymentReference: reference,
+                  isGuestOrder: !user
                 }
               });
             } else {
@@ -202,6 +200,60 @@ const Checkout: React.FC = () => {
           </div>
 
           {/* Checkout Form */}
+          <Card className="bg-white/80 backdrop-blur-lg border-amber-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-gray-800">Checkout Options</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!user && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="guestCheckout"
+                      checked={isGuestCheckout}
+                      onChange={(e) => setIsGuestCheckout(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
+                    />
+                    <label htmlFor="guestCheckout" className="text-sm font-medium text-gray-700">
+                      Checkout as Guest
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    You can checkout without creating an account. Your order details will be sent to your email.
+                  </p>
+                </div>
+              )}
+
+              {user && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-green-800">
+                    ✓ Signed in as {user.email}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Your order will be saved to your account.
+                  </p>
+                </div>
+              )}
+
+              {!user && !isGuestCheckout && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-blue-800 mb-2">
+                    Have an account?
+                  </p>
+                  <Button
+                    onClick={() => navigate('/login')}
+                    variant="outline"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    Sign In to Your Account
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Shipping Information Form */}
           <Card className="bg-white/80 backdrop-blur-lg border-amber-200 shadow-xl">
             <CardHeader>
               <CardTitle className="text-gray-800">Shipping Information</CardTitle>
