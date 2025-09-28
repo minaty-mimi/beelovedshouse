@@ -13,8 +13,18 @@ const Profile: React.FC = () => {
   const isGuest = !user;
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    try {
+      console.log('Profile: Attempting to sign out...');
+      console.log('Profile: Current user before sign out:', user);
+      await signOut();
+      console.log('Profile: Sign out completed successfully');
+      // Navigate immediately since we know the state will be cleared
+      navigate('/');
+    } catch (error) {
+      console.error('Profile: Sign out failed:', error);
+      // You could show a toast notification here
+      alert('Failed to sign out. Please try again.');
+    }
   };
 
   const handleSignIn = () => {
@@ -131,7 +141,7 @@ const Profile: React.FC = () => {
                       <Mail className="w-5 h-5 text-amber-600" />
                       <div>
                         <p className="text-sm text-gray-600">Email</p>
-                        <p className="font-medium text-gray-800">{user.email}</p>
+                        <p className="font-medium text-gray-800">{user?.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
@@ -139,7 +149,7 @@ const Profile: React.FC = () => {
                       <div>
                         <p className="text-sm text-gray-600">Member Since</p>
                         <p className="font-medium text-gray-800">
-                          {new Date(user.created_at || Date.now()).toLocaleDateString()}
+                          {new Date(user?.created_at || Date.now()).toLocaleDateString()}
                         </p>
                       </div>
                     </div>

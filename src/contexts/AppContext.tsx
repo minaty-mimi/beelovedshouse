@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '../lib/supabase';
 import { cartOperations, sessionManager } from '../lib/database';
@@ -106,19 +106,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sessionId, setSessionId] = useState<string>('');
 
   // Convert Firebase User to AppContext User format
-  const user: User | null = firebaseUser ? {
-    id: firebaseUser.uid,
+  const user: User | null = useMemo(() => firebaseUser ? {
+    id: firebaseUser.id,
     email: firebaseUser.email || '',
-    name: firebaseUser.displayName || undefined,
-    created_at: undefined // Firebase doesn't provide this directly
-  } : null;
+    name: firebaseUser.user_metadata?.display_name || undefined,
+    created_at: undefined // Supabase doesn't provide this directly
+  } : null, [firebaseUser]);
+
+  // Debug user state changes
+  useEffect(() => {
+    console.log('AppContext: User state changed:', user, 'firebaseUser:', firebaseUser);
+  }, [user]);
 
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
   };
 
   // Load products from Supabase
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       setProductsLoading(true);
 
@@ -137,6 +142,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (data && data.length > 0) {
           setProducts(data);
+          setProductsLoading(false);
           return;
         }
       }
@@ -146,10 +152,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (error) {
       console.error('Error loading products:', error);
       loadSampleProducts();
-    } finally {
-      setProductsLoading(false);
     }
-  };
+  }, []);
 
   // Load sample products for fallback
   const loadSampleProducts = () => {
@@ -241,15 +245,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ];
 
     setProducts(sampleProducts);
+    setProductsLoading(false);
   };
 
+  // Load cart from database or localStorage
+  const loadCart = useCallback(async () => {
+    try {
+      setCartLoading(true);
+      const currentSessionId = sessionManager.getSessionId();
+      const cartData = await cartOperations.loadCartItems(user?.id || null, currentSessionId);
+
+      const formattedCart: CartItem[] = cartData.map((item: CartDataItem) => {
+        // If item has products data (from Supabase), use it
+        if (item.products) {
+          return {
+            id: item.product_id,
+            product: item.products,
+            quantity: item.quantity
+          };
+        }
+        // Otherwise, find product from local products array (localStorage fallback)
+        const product = products.find(p => p.id === item.product_id);
+        return {
+          id: item.product_id,
+          product: product || {
+            id: item.product_id,
+            title: 'Unknown Product',
+            price: 0,
+            image: '',
+            category: 'Unknown',
+            type: 'physical' as const
+          },
+          quantity: item.quantity
+        };
+      });
+
+      setCart(formattedCart);
+    } catch (error) {
+      console.error('Error loading cart:', error);
+    } finally {
+      setCartLoading(false);
+    }
+  }, [user?.id, products]);
+
   // Set up real-time subscriptions
-  const setupRealtimeSubscriptions = () => {
+  const setupRealtimeSubscriptions = useCallback(() => {
     if (!supabase) return;
 
-    let productsChannel: any = null;
-    let ordersChannel: any = null;
-    let cartChannel: any = null;
+    let productsChannel: ReturnType<typeof supabase.channel> | null = null;
+    let ordersChannel: ReturnType<typeof supabase.channel> | null = null;
+    let cartChannel: ReturnType<typeof supabase.channel> | null = null;
 
     try {
       // Subscribe to products table changes
@@ -307,7 +352,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             console.log('Cart real-time update:', payload);
             // Only reload cart if the change is relevant to current user/session
             const currentSessionId = sessionManager.getSessionId();
-            const payloadData = payload.new as any;
+            const payloadData = payload.new as { user_id?: string; session_id?: string } | null;
             if (payloadData?.user_id === user?.id || payloadData?.session_id === currentSessionId) {
               setTimeout(() => {
                 loadCart();
@@ -336,12 +381,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
     };
-  };
+  }, [user?.id, loadProducts, loadCart]);
 
   // Load products on mount
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [loadProducts]);
 
   // Initialize session and load cart
   useEffect(() => {
@@ -351,53 +396,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await loadCart();
     };
     initSession();
-  }, []);
+  }, [loadCart]);
 
   // Set up real-time subscriptions after functions are defined
   useEffect(() => {
     const cleanup = setupRealtimeSubscriptions();
     return cleanup; // Cleanup subscriptions on unmount
-  }, [user]); // Re-setup when user changes
-
-  // Load cart from database or localStorage
-  const loadCart = async () => {
-    try {
-      setCartLoading(true);
-      const currentSessionId = sessionManager.getSessionId();
-      const cartData = await cartOperations.loadCartItems(user?.id || null, currentSessionId);
-
-      const formattedCart: CartItem[] = cartData.map((item: CartDataItem) => {
-        // If item has products data (from Supabase), use it
-        if (item.products) {
-          return {
-            id: item.product_id,
-            product: item.products,
-            quantity: item.quantity
-          };
-        }
-        // Otherwise, find product from local products array (localStorage fallback)
-        const product = products.find(p => p.id === item.product_id);
-        return {
-          id: item.product_id,
-          product: product || {
-            id: item.product_id,
-            title: 'Unknown Product',
-            price: 0,
-            image: '',
-            category: 'Unknown',
-            type: 'physical' as const
-          },
-          quantity: item.quantity
-        };
-      });
-
-      setCart(formattedCart);
-    } catch (error) {
-      console.error('Error loading cart:', error);
-    } finally {
-      setCartLoading(false);
-    }
-  };
+  }, [setupRealtimeSubscriptions]);
 
   // Transfer cart when user signs in
   useEffect(() => {
@@ -413,7 +418,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
     transferCart();
-  }, [firebaseUser?.uid]); // Only run when user ID changes
+  }, [firebaseUser?.id, user, sessionId, loadCart]); // Only run when user ID changes
 
   const addToWishlist = (id: number) => {
     setWishlist(prev => {

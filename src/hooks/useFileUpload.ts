@@ -69,8 +69,8 @@ export const useFileUpload = (options: UseFileUploadOptions = {}): UseFileUpload
       }
 
       return result;
-    } catch (err: any) {
-      const errorMsg = err.message || 'Upload failed';
+    } catch (err) {
+      const errorMsg = (err as Error).message || 'Upload failed';
       setError(errorMsg);
       return { success: false, error: errorMsg };
     } finally {
@@ -91,8 +91,8 @@ export const useFileUpload = (options: UseFileUploadOptions = {}): UseFileUpload
       }
 
       return result;
-    } catch (err: any) {
-      const errorMsg = err.message || 'Delete failed';
+    } catch (err) {
+      const errorMsg = (err as Error).message || 'Delete failed';
       setError(errorMsg);
       return { success: false, error: errorMsg };
     }

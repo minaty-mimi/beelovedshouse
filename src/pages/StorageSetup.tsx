@@ -20,9 +20,9 @@ const StorageSetup: React.FC = () => {
         setStatus('error');
         setError(result.error || 'Failed to create bucket');
       }
-    } catch (err: any) {
+    } catch (err) {
       setStatus('error');
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
     }
   };
 
@@ -128,7 +128,6 @@ const StorageSetup: React.FC = () => {
 
             {status === 'creating' && (
               <div className="space-y-4 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
                 <p className="text-gray-600">Creating storage bucket...</p>
                 <p className="text-sm text-gray-500">This may take a few moments</p>
               </div>

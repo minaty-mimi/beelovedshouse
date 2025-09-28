@@ -31,7 +31,7 @@ export const cartOperations = {
     // localStorage fallback
     const cartKey = userId ? `cart_user_${userId}` : `cart_session_${sessionId}`;
     const existingCart = JSON.parse(localStorage.getItem(cartKey) || '[]');
-    const existingItemIndex = existingCart.findIndex((item: any) => item.product_id === productId);
+    const existingItemIndex = existingCart.findIndex((item: { product_id: number }) => item.product_id === productId);
 
     if (existingItemIndex >= 0) {
       existingCart[existingItemIndex].quantity += quantity;
@@ -97,7 +97,7 @@ export const cartOperations = {
     const cartData = JSON.parse(localStorage.getItem(cartKey) || '[]');
 
     // Return in the same format as Supabase query
-    return cartData.map((item: any) => ({
+    return cartData.map((item: { id?: string; product_id: number; quantity: number }) => ({
       id: item.id || `local_${item.product_id}_${Date.now()}`,
       quantity: item.quantity,
       product_id: item.product_id,
@@ -132,7 +132,7 @@ export const cartOperations = {
     // localStorage fallback
     const cartKey = userId ? `cart_user_${userId}` : `cart_session_${sessionId}`;
     const existingCart = JSON.parse(localStorage.getItem(cartKey) || '[]');
-    const updatedCart = existingCart.filter((item: any) => item.product_id !== productId);
+    const updatedCart = existingCart.filter((item: { product_id: number }) => item.product_id !== productId);
     localStorage.setItem(cartKey, JSON.stringify(updatedCart));
   },
 
@@ -168,7 +168,7 @@ export const cartOperations = {
   async updateCartQuantity(userId: string | null, sessionId: string, productId: number, quantity: number) {
     if (supabase) {
       try {
-        const updateData: any = {
+        const updateData: { quantity: number; updated_at: string } = {
           quantity,
           updated_at: new Date().toISOString()
         };
@@ -195,7 +195,7 @@ export const cartOperations = {
     // localStorage fallback
     const cartKey = userId ? `cart_user_${userId}` : `cart_session_${sessionId}`;
     const existingCart = JSON.parse(localStorage.getItem(cartKey) || '[]');
-    const updatedCart = existingCart.map((item: any) =>
+    const updatedCart = existingCart.map((item: { product_id: number; quantity: number }) =>
       item.product_id === productId ? { ...item, quantity } : item
     );
     localStorage.setItem(cartKey, JSON.stringify(updatedCart));
@@ -237,8 +237,8 @@ export const cartOperations = {
 
     // Merge session cart into user cart
     const mergedCart = [...userCart];
-    sessionCart.forEach((sessionItem: any) => {
-      const existingIndex = mergedCart.findIndex((item: any) => item.product_id === sessionItem.product_id);
+    sessionCart.forEach((sessionItem: { product_id: number; quantity: number }) => {
+      const existingIndex = mergedCart.findIndex((item: { product_id: number }) => item.product_id === sessionItem.product_id);
       if (existingIndex >= 0) {
         mergedCart[existingIndex].quantity += sessionItem.quantity;
       } else {
@@ -254,11 +254,16 @@ export const cartOperations = {
 // Order operations with localStorage fallback
 export const orderOperations = {
   // Create a new order
-  async createOrder(userId: string | null, cartItems: any[], shippingAddress: any, totalAmount: number) {
+  async createOrder(userId: string | null, cartItems: Array<{ product_id?: number; product: { id: number; type: string; inventory: number; price: number }; quantity: number }>, shippingAddress: Record<string, unknown>, totalAmount: number) {
     if (supabase) {
       try {
         // Create the order
-        const orderData: any = {
+        const orderData: {
+          total_amount: number;
+          status: string;
+          shipping_address: Record<string, unknown>;
+          user_id?: string;
+        } = {
           total_amount: totalAmount,
           status: 'pending',
           shipping_address: shippingAddress
@@ -389,7 +394,7 @@ export const orderOperations = {
     const orders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
 
     // Enrich orders with items
-    return orders.map((order: any) => {
+    return orders.map((order: { id: string }) => {
       const orderItemsKey = `order_items_${order.id}`;
       const items = JSON.parse(localStorage.getItem(orderItemsKey) || '[]');
       return {
@@ -423,11 +428,11 @@ export const orderOperations = {
 
     // localStorage fallback - find and update order
     const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const updatedOrders = orders.map((order: any) =>
+    const updatedOrders = orders.map((order: { id: string; status?: string; updated_at?: string }) =>
       order.id === orderId ? { ...order, status, updated_at: new Date().toISOString() } : order
     );
     localStorage.setItem('orders', JSON.stringify(updatedOrders));
-    return updatedOrders.find((order: any) => order.id === orderId);
+    return updatedOrders.find((order: { id: string }) => order.id === orderId);
   }
 };
 

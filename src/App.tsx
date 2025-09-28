@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { initializeDatabase } from "./lib/database-init";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AppProvider } from "./contexts/AppContext";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
@@ -38,6 +38,18 @@ import Support from "./pages/Support";
 import Company from "./pages/Company";
 import CreateAdmin from "./pages/CreateAdmin";
 import StorageSetup from "./pages/StorageSetup";
+
+// Protected Route Component for Admin Routes
+const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isAdmin, userProfile, loading } = useAuth();
+
+  // Show loading or redirect to login if not authenticated/admin
+  if (loading || !user || !userProfile || !isAdmin) {
+    return <AdminLogin />;
+  }
+
+  return <>{children}</>;
+};
 
 const App = () => {
   useEffect(() => {
@@ -80,7 +92,11 @@ const App = () => {
             <Route path="/support" element={<Support />} />
             <Route path="/company" element={<Company />} />
             <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            } />
             <Route path="/create-admin" element={<CreateAdmin />} />
             <Route path="/storage-setup" element={<StorageSetup />} />
             <Route path="*" element={<NotFound />} />

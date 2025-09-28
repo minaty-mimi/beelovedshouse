@@ -40,11 +40,11 @@ export const uploadFile = async (
       success: true,
       url: downloadURL
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error uploading file:', error);
     return {
       success: false,
-      error: error.message || 'Failed to upload file'
+      error: (error as Error).message || 'Failed to upload file'
     };
   }
 };
@@ -60,11 +60,11 @@ export const deleteFile = async (path: string): Promise<{ success: boolean; erro
     await deleteObject(storageRef);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting file:', error);
     return {
       success: false,
-      error: error.message || 'Failed to delete file'
+      error: (error as Error).message || 'Failed to delete file'
     };
   }
 };
@@ -80,10 +80,10 @@ export const getFileURL = async (path: string): Promise<{ url?: string; error?: 
     const url = await getDownloadURL(storageRef);
 
     return { url };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error getting file URL:', error);
     return {
-      error: error.message || 'Failed to get file URL'
+      error: (error as Error).message || 'Failed to get file URL'
     };
   }
 };
@@ -101,10 +101,10 @@ export const listFiles = async (path: string): Promise<{ files?: string[]; error
     const files = result.items.map(item => item.fullPath);
 
     return { files };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error listing files:', error);
     return {
-      error: error.message || 'Failed to list files'
+      error: (error as Error).message || 'Failed to list files'
     };
   }
 };

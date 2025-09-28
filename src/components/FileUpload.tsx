@@ -100,7 +100,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         >
           <div className="flex flex-col items-center gap-2">
             {isUploading ? (
-              <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+              <Upload className="w-6 h-6 text-amber-500" />
             ) : (
               <Upload className="w-6 h-6 text-gray-400" />
             )}

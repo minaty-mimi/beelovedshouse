@@ -40,11 +40,37 @@ import { Textarea } from '../components/ui/textarea';
 import { FileUpload } from '../components/FileUpload';
 import { supabase } from '../lib/supabase';
 
+interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: number;
+  quantity: number;
+  price: number;
+  products: {
+    id: number;
+    title: string;
+    price: number;
+    image: string;
+  };
+}
+
+interface Order {
+  id: string;
+  user_id: string;
+  total_amount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shipping_address: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  order_items: OrderItem[];
+}
+
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { products, productsLoading, updateInventory, getLowStockProducts } = useAppContext();
+  const { products, updateInventory, getLowStockProducts } = useAppContext();
   const { user, userProfile, isAdmin, logout, loading } = useAuth();
   const [showPreview, setShowPreview] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const [newProduct, setNewProduct] = useState({
     title: '',
     price: '',
@@ -56,7 +82,7 @@ const AdminDashboard: React.FC = () => {
     image: '',
     description: ''
   });
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
 
   // Check admin authentication
@@ -130,23 +156,6 @@ const AdminDashboard: React.FC = () => {
       }
     };
   }, []);
-
-  // Show loading while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated or not admin
-  if (!user || !isAdmin) {
-    return null;
-  }
 
   const handleLogout = async () => {
     try {
@@ -597,12 +606,7 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {productsLoading ? (
-                    <div className="flex justify-center items-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-                      <span className="ml-2 text-gray-600">Loading products...</span>
-                    </div>
-                  ) : products.length === 0 ? (
+                  {products.length === 0 ? (
                     <div className="text-center py-8">
                       <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500">No products found. Add your first product above.</p>
@@ -832,12 +836,7 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {productsLoading ? (
-                    <div className="flex justify-center items-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
-                      <span className="ml-2 text-sm text-gray-600">Loading products...</span>
-                    </div>
-                  ) : products.length === 0 ? (
+                  {products.length === 0 ? (
                     <p className="text-gray-500 text-center py-4">No products available</p>
                   ) : (
                     products.slice(0, 5).map((product, index) => (

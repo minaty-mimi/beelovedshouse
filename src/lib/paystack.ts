@@ -1,7 +1,19 @@
 // Paystack Payment Integration
 declare global {
   interface Window {
-    PaystackPop: any;
+    PaystackPop: {
+      setup: (config: {
+        key: string;
+        email: string;
+        amount: number;
+        currency: string;
+        ref: string;
+        callback_url?: string;
+        metadata?: Record<string, unknown>;
+        callback: (response: { reference: string }) => void;
+        onClose: () => void;
+      }) => { openIframe: () => void };
+    };
   }
 }
 
@@ -11,8 +23,8 @@ export interface PaymentData {
   orderId: string;
   customerEmail: string;
   customerName: string;
-  shippingAddress: any;
-  lineItems: any[];
+  shippingAddress: Record<string, unknown>;
+  lineItems: Array<{ id: string; name: string; amount: number; quantity: number }>;
 }
 
 export const paymentService = {
@@ -66,7 +78,7 @@ export const paymentService = {
         customer_name: paymentData.customerName,
         shipping_address: JSON.stringify(paymentData.shippingAddress)
       },
-      callback: function(response: any) {
+      callback: function(response: { reference: string }) {
         // Payment successful
         console.log('Payment successful:', response);
         onSuccess(response.reference);
@@ -123,7 +135,7 @@ export const paymentService = {
   },
 
   // Handle payment failure
-  handlePaymentFailure: (error: any) => {
+  handlePaymentFailure: (error: Error | string) => {
     console.error('Payment failed:', error);
     // Handle payment failure (show error message, etc.)
   },

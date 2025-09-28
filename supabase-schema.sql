@@ -4,14 +4,14 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create users table
-CREATE TABLE IF NOT EXISTS users (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  name TEXT,
-  phone TEXT,
+-- Create user_profiles table for authentication and roles
+CREATE TABLE IF NOT EXISTS user_profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email TEXT NOT NULL,
+  display_name TEXT,
+  role TEXT CHECK (role IN ('admin', 'user')) DEFAULT 'user',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  last_login_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create products table
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS products (
 -- Create orders table
 CREATE TABLE IF NOT EXISTS orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   total_amount INTEGER NOT NULL, -- Total in NGN
   status TEXT CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')) DEFAULT 'pending',
   shipping_address JSONB,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 -- Create cart_items table
 CREATE TABLE IF NOT EXISTS cart_items (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   session_id TEXT NOT NULL,
   product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
   quantity INTEGER DEFAULT 1,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
 -- Create wishlist table
 CREATE TABLE IF NOT EXISTS wishlist (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id, product_id)
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS wishlist (
 -- Create admin_users table for dashboard access
 CREATE TABLE IF NOT EXISTS admin_users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT CHECK (role IN ('admin', 'super_admin')) DEFAULT 'admin',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -95,7 +95,7 @@ CREATE INDEX IF NOT EXISTS idx_cart_items_session_id ON cart_items(session_id);
 CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON wishlist(user_id);
 
 -- Enable Row Level Security
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
@@ -103,19 +103,28 @@ ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for users table
-CREATE POLICY "Users can view own data" ON users
+-- RLS Policies for user_profiles table
+CREATE POLICY "Users can view own profile" ON user_profiles
   FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own data" ON users
+CREATE POLICY "Users can update own profile" ON user_profiles
   FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Users can insert own data" ON users
+CREATE POLICY "Users can insert own profile" ON user_profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- RLS Policies for products table (public read, admin write)
 CREATE POLICY "Anyone can view products" ON products
   FOR SELECT USING (true);
+
+CREATE POLICY "Admins can manage products" ON products
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE user_profiles.id = auth.uid()
+      AND user_profiles.role = 'admin'
+    )
+  );
 
 -- RLS Policies for orders table
 CREATE POLICY "Users can view own orders" ON orders
@@ -167,8 +176,9 @@ CREATE POLICY "Users can manage own wishlist" ON wishlist
 CREATE POLICY "Only admins can view admin users" ON admin_users
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM admin_users au
-      WHERE au.user_id = auth.uid()
+      SELECT 1 FROM user_profiles au
+      WHERE au.id = auth.uid()
+      AND au.role = 'admin'
     )
   );
 
@@ -182,7 +192,7 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers for updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products

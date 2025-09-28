@@ -12,8 +12,8 @@ const AdminSetup: React.FC = () => {
     try {
       await createAdminUser('admin@beelovedshouse.com', 'Beeloved@1#', 'Bee Loved\'s House Admin');
       setStatus('Admin user created successfully! You can now login with admin@beelovedshouse.com');
-    } catch (error: any) {
-      setStatus(`Error: ${error.message}`);
+    } catch (error) {
+      setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     } finally {
       setLoading(false);
     }

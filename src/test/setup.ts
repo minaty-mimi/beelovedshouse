@@ -75,7 +75,33 @@ vi.mock('@supabase/supabase-js', () => ({
       getUser: () => Promise.resolve({ data: { user: null } }),
       signOut: () => Promise.resolve(),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
-    }
+    },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.resolve({ data: null, error: null }),
+          order: () => Promise.resolve({ data: [], error: null }),
+          limit: () => Promise.resolve({ data: [], error: null })
+        }),
+        order: () => ({
+          limit: () => Promise.resolve({ data: [], error: null })
+        }),
+        limit: () => Promise.resolve({ data: [], error: null })
+      }),
+      insert: () => Promise.resolve({ data: null, error: null }),
+      update: () => ({
+        eq: () => Promise.resolve({ data: null, error: null })
+      }),
+      delete: () => ({
+        eq: () => Promise.resolve({ data: null, error: null })
+      })
+    }),
+    channel: () => ({
+      on: () => ({
+        subscribe: () => ({ unsubscribe: () => {} })
+      })
+    }),
+    removeChannel: () => Promise.resolve()
   })
 }))
 

@@ -16,14 +16,26 @@ const AdminLogin: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, isAdmin, user, loading: authLoading } = useAuth();
+  const { signIn, isAdmin, user, loading: authLoading, userProfile } = useAuth();
 
   // Redirect if already authenticated and is admin
   useEffect(() => {
-    if (!authLoading && user && isAdmin) {
+    console.log('AdminLogin: Checking redirect conditions:', {
+      authLoading,
+      user: !!user,
+      isAdmin,
+      userEmail: user?.email,
+      userProfileLoaded: !!userProfile
+    });
+    if (!authLoading && user && userProfile && isAdmin) {
+      console.log('AdminLogin: Redirecting to dashboard...');
       navigate('/admin/dashboard');
+    } else if (!authLoading && user && userProfile && !isAdmin) {
+      console.log('AdminLogin: User authenticated but not admin, staying on login page');
+    } else if (!authLoading && !user) {
+      console.log('AdminLogin: No user authenticated');
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, authLoading, userProfile, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({
@@ -44,12 +56,16 @@ const AdminLogin: React.FC = () => {
 
       // Check if user has admin role (this will be handled by the auth context)
       // If not admin, they'll be redirected back here
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login error:', error);
-      if (error.message.includes('auth/user-not-found') || error.message.includes('auth/wrong-password')) {
-        setError('Invalid email or password');
-      } else if (error.message.includes('auth/too-many-requests')) {
-        setError('Too many failed attempts. Please try again later.');
+      if (error instanceof Error) {
+        if (error.message.includes('auth/user-not-found') || error.message.includes('auth/wrong-password')) {
+          setError('Invalid email or password');
+        } else if (error.message.includes('auth/too-many-requests')) {
+          setError('Too many failed attempts. Please try again later.');
+        } else {
+          setError('An error occurred. Please try again.');
+        }
       } else {
         setError('An error occurred. Please try again.');
       }
@@ -57,41 +73,6 @@ const AdminLogin: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If user is authenticated but not admin, show access denied
-  if (user && !isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full text-center">
-          <div className="bg-red-50 border border-red-200 rounded-3xl p-8">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h1>
-            <p className="text-gray-600 mb-6">
-              You don't have admin privileges. Please contact an administrator if you believe this is an error.
-            </p>
-            <Button
-              onClick={() => navigate('/')}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-            >
-              Back to Store
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center p-4">
@@ -181,14 +162,7 @@ const AdminLogin: React.FC = () => {
               disabled={loading}
               className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Signing In...
-                </div>
-              ) : (
-                'Access Dashboard'
-              )}
+              {loading ? 'Signing In...' : 'Access Dashboard'}
             </Button>
           </form>
 

@@ -1,5 +1,14 @@
 import { supabase } from './supabase';
 
+export interface StorageFile {
+  name: string;
+  id: string;
+  updated_at: string;
+  created_at: string;
+  last_accessed_at: string;
+  metadata: Record<string, unknown>;
+}
+
 export interface UploadOptions {
   contentType?: string;
   cacheControl?: string;
@@ -50,11 +59,11 @@ export const uploadFile = async (
       success: true,
       url: urlData.publicUrl
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error uploading file:', error);
     return {
       success: false,
-      error: error.message || 'Failed to upload file'
+      error: error instanceof Error ? error.message : 'Failed to upload file'
     };
   }
 };
@@ -84,11 +93,11 @@ export const deleteFile = async (
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting file:', error);
     return {
       success: false,
-      error: error.message || 'Failed to delete file'
+      error: error instanceof Error ? error.message : 'Failed to delete file'
     };
   }
 };
@@ -113,10 +122,10 @@ export const getFileURL = async (
       .getPublicUrl(path);
 
     return { url: data.publicUrl };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error getting file URL:', error);
     return {
-      error: error.message || 'Failed to get file URL'
+      error: error instanceof Error ? error.message : 'Failed to get file URL'
     };
   }
 };
@@ -130,7 +139,7 @@ export const getFileURL = async (
 export const listFiles = async (
   bucket: string = 'products',
   path?: string
-): Promise<{ files?: any[]; error?: string }> => {
+): Promise<{ files?: StorageFile[]; error?: string }> => {
   if (!supabase) {
     return { error: 'Supabase client not initialized' };
   }
@@ -150,10 +159,10 @@ export const listFiles = async (
     }
 
     return { files: data };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error listing files:', error);
     return {
-      error: error.message || 'Failed to list files'
+      error: error instanceof Error ? error.message : 'Failed to list files'
     };
   }
 };
@@ -183,11 +192,11 @@ export const createBucket = async (
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating bucket:', error);
     return {
       success: false,
-      error: error.message || 'Failed to create bucket'
+      error: error instanceof Error ? error.message : 'Failed to create bucket'
     };
   }
 };

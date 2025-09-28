@@ -46,12 +46,16 @@ const Login: React.FC = () => {
     try {
       await signIn(formData.email, formData.password);
       // Navigation will happen via useEffect when user state updates
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sign in error:', error);
-      if (error.message.includes('auth/user-not-found') || error.message.includes('auth/wrong-password')) {
-        setError('Invalid email or password');
-      } else if (error.message.includes('auth/too-many-requests')) {
-        setError('Too many failed attempts. Please try again later.');
+      if (error instanceof Error) {
+        if (error.message.includes('auth/user-not-found') || error.message.includes('auth/wrong-password')) {
+          setError('Invalid email or password');
+        } else if (error.message.includes('auth/too-many-requests')) {
+          setError('Too many failed attempts. Please try again later.');
+        } else {
+          setError('An error occurred. Please try again.');
+        }
       } else {
         setError('An error occurred. Please try again.');
       }
@@ -80,14 +84,18 @@ const Login: React.FC = () => {
     try {
       await signUp(formData.email, formData.password, formData.displayName || formData.email.split('@')[0]);
       // Navigation will happen via useEffect when user state updates
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sign up error:', error);
-      if (error.message.includes('auth/email-already-in-use')) {
-        setError('An account with this email already exists');
-      } else if (error.message.includes('auth/weak-password')) {
-        setError('Password is too weak');
-      } else if (error.message.includes('auth/invalid-email')) {
-        setError('Invalid email address');
+      if (error instanceof Error) {
+        if (error.message.includes('auth/email-already-in-use')) {
+          setError('An account with this email already exists');
+        } else if (error.message.includes('auth/weak-password')) {
+          setError('Password is too weak');
+        } else if (error.message.includes('auth/invalid-email')) {
+          setError('Invalid email address');
+        } else {
+          setError('An error occurred. Please try again.');
+        }
       } else {
         setError('An error occurred. Please try again.');
       }
@@ -95,18 +103,6 @@ const Login: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100 flex items-center justify-center p-4">
@@ -214,14 +210,7 @@ const Login: React.FC = () => {
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Signing In...
-                    </div>
-                  ) : (
-                    'Sign In'
-                  )}
+                  {loading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
             </TabsContent>
@@ -332,14 +321,7 @@ const Login: React.FC = () => {
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Creating Account...
-                    </div>
-                  ) : (
-                    'Create Account'
-                  )}
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </form>
             </TabsContent>

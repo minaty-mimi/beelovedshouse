@@ -1,9 +1,29 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Define types for Paystack webhook data
+interface PaystackWebhookData {
+  reference: string;
+  amount: number;
+  customer?: {
+    email: string;
+    customer_code: string;
+  };
+  metadata?: {
+    order_id?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface PaystackWebhookPayload {
+  event: string;
+  data: PaystackWebhookData;
 }
 
 serve(async (req) => {
@@ -37,7 +57,7 @@ serve(async (req) => {
     }
 
     // Parse the webhook payload
-    const payload = await req.json()
+    const payload: PaystackWebhookPayload = await req.json()
     const { event, data } = payload
 
     console.log('Received Paystack webhook:', event, data)
@@ -104,7 +124,7 @@ serve(async (req) => {
   }
 })
 
-async function handleSuccessfulPayment(supabaseClient: any, data: any) {
+async function handleSuccessfulPayment(supabaseClient: SupabaseClient, data: PaystackWebhookData) {
   const { reference, amount, customer, metadata } = data
 
   try {
@@ -168,7 +188,7 @@ async function handleSuccessfulPayment(supabaseClient: any, data: any) {
   }
 }
 
-async function handleFailedPayment(supabaseClient: any, data: any) {
+async function handleFailedPayment(supabaseClient: SupabaseClient, data: PaystackWebhookData) {
   const { reference, metadata } = data
 
   try {
@@ -196,12 +216,12 @@ async function handleFailedPayment(supabaseClient: any, data: any) {
   }
 }
 
-async function handleSuccessfulTransfer(supabaseClient: any, data: any) {
+async function handleSuccessfulTransfer(supabaseClient: SupabaseClient, data: PaystackWebhookData) {
   // Handle transfer/payout success if needed
   console.log('Transfer successful:', data)
 }
 
-async function handleFailedTransfer(supabaseClient: any, data: any) {
+async function handleFailedTransfer(supabaseClient: SupabaseClient, data: PaystackWebhookData) {
   // Handle transfer/payout failure if needed
   console.log('Transfer failed:', data)
 }

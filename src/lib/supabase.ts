@@ -3,10 +3,22 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Create Supabase client only if valid URLs are provided
-export const supabase = supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('http')
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+console.log('Supabase Config - URL:', supabaseUrl, 'Key exists:', !!supabaseAnonKey);
+
+// Create Supabase client
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+);
+
+console.log('Supabase client created successfully');
+
+// Test the client connection
+supabase.auth.getSession().then(({ data, error }) => {
+  console.log('Supabase client test - session:', !!data.session, 'error:', error);
+}).catch(err => {
+  console.error('Supabase client test failed:', err);
+});
 
 // Database types
 export interface Database {
@@ -82,7 +94,7 @@ export interface Database {
           user_id: string
           total_amount: number
           status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-          shipping_address: any
+          shipping_address: Record<string, unknown>
           created_at: string
           updated_at: string
         }
@@ -91,7 +103,7 @@ export interface Database {
           user_id: string
           total_amount: number
           status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-          shipping_address: any
+          shipping_address: Record<string, unknown>
           created_at?: string
           updated_at?: string
         }
@@ -100,7 +112,7 @@ export interface Database {
           user_id?: string
           total_amount?: number
           status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-          shipping_address?: any
+          shipping_address?: Record<string, unknown>
           created_at?: string
           updated_at?: string
         }
@@ -165,6 +177,8 @@ export interface Database {
 }
 
 // Mock auth functions with working demo authentication
+let authStateChangeCallback: ((event: string, session: { user: unknown } | null) => void) | null = null;
+
 const mockAuth = {
   signUp: async (email: string, _password: string) => {
     // Simulate successful signup for demo purposes
@@ -176,6 +190,11 @@ const mockAuth = {
 
     // Store in localStorage for persistence
     localStorage.setItem('demo_user', JSON.stringify(mockUser));
+
+    // Trigger auth state change
+    if (authStateChangeCallback) {
+      authStateChangeCallback('SIGNED_IN', { user: mockUser });
+    }
 
     return {
       data: { user: mockUser, session: { user: mockUser } },
@@ -194,6 +213,11 @@ const mockAuth = {
     // Store in localStorage for persistence
     localStorage.setItem('demo_user', JSON.stringify(mockUser));
 
+    // Trigger auth state change
+    if (authStateChangeCallback) {
+      authStateChangeCallback('SIGNED_IN', { user: mockUser });
+    }
+
     return {
       data: { user: mockUser, session: { user: mockUser } },
       error: null
@@ -201,8 +225,25 @@ const mockAuth = {
   },
 
   signOut: async () => {
-    localStorage.removeItem('demo_user');
-    return { error: null };
+    console.log('MockAuth: signOut called');
+    try {
+      localStorage.removeItem('demo_user');
+      console.log('MockAuth: Removed demo_user from localStorage');
+
+      // Trigger auth state change
+      if (authStateChangeCallback) {
+        console.log('MockAuth: Triggering SIGNED_OUT callback');
+        authStateChangeCallback('SIGNED_OUT', null);
+      } else {
+        console.log('MockAuth: No authStateChangeCallback registered');
+      }
+
+      console.log('MockAuth: signOut completed successfully');
+      return { error: null };
+    } catch (error) {
+      console.error('MockAuth: Error in signOut:', error);
+      return { error: error as Error };
+    }
   },
 
   getUser: async () => {
@@ -211,11 +252,16 @@ const mockAuth = {
   },
 
   onAuthStateChange: (callback: (event: string, session: { user: unknown } | null) => void) => {
+    console.log('MockAuth: onAuthStateChange registered');
+    authStateChangeCallback = callback;
+
     // Check for stored user on init
     const storedUser = localStorage.getItem('demo_user');
     if (storedUser) {
+      console.log('MockAuth: Found stored user, triggering SIGNED_IN');
       setTimeout(() => callback('SIGNED_IN', { user: JSON.parse(storedUser) }), 0);
     } else {
+      console.log('MockAuth: No stored user, triggering SIGNED_OUT');
       setTimeout(() => callback('SIGNED_OUT', null), 0);
     }
 
@@ -223,8 +269,10 @@ const mockAuth = {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'demo_user') {
         if (e.newValue) {
+          console.log('MockAuth: Storage change - SIGNED_IN');
           callback('SIGNED_IN', { user: JSON.parse(e.newValue) });
         } else {
+          console.log('MockAuth: Storage change - SIGNED_OUT');
           callback('SIGNED_OUT', null);
         }
       }
@@ -235,7 +283,11 @@ const mockAuth = {
     return {
       data: {
         subscription: {
-          unsubscribe: () => window.removeEventListener('storage', handleStorageChange)
+          unsubscribe: () => {
+            console.log('MockAuth: Unsubscribing from auth state changes');
+            authStateChangeCallback = null;
+            window.removeEventListener('storage', handleStorageChange);
+          }
         }
       }
     };
