@@ -107,10 +107,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Convert Firebase User to AppContext User format
   const user: User | null = useMemo(() => firebaseUser ? {
-    id: firebaseUser.id,
+    id: firebaseUser.uid,
     email: firebaseUser.email || '',
-    name: firebaseUser.user_metadata?.display_name || undefined,
-    created_at: undefined // Supabase doesn't provide this directly
+    name: firebaseUser.displayName || undefined,
+    created_at: firebaseUser.metadata.creationTime || undefined
   } : null, [firebaseUser]);
 
   // Debug user state changes
@@ -418,7 +418,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
     transferCart();
-  }, [firebaseUser?.id, user, sessionId, loadCart]); // Only run when user ID changes
+  }, [firebaseUser?.uid, user, sessionId, loadCart]); // Only run when user ID changes
 
   const addToWishlist = (id: number) => {
     setWishlist(prev => {
