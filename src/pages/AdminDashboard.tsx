@@ -1545,14 +1545,16 @@ const AdminDashboard: React.FC = () => {
               <AlertTriangle className="w-5 h-5" />
               Delete Product?
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Are you sure you want to permanently delete{' '}
-                <span className="font-semibold text-gray-900">"{productToDelete?.title}"</span>?
-              </p>
-              <p className="text-sm text-red-600 font-medium">
-                ⚠️ This action cannot be undone. The product will be removed from your store immediately.
-              </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  Are you sure you want to permanently delete{' '}
+                  <span className="font-semibold text-gray-900">"{productToDelete?.title}"</span>?
+                </p>
+                <p className="text-sm text-red-600 font-medium">
+                  ⚠️ This action cannot be undone. The product will be removed from your store immediately.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1560,7 +1562,10 @@ const AdminDashboard: React.FC = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
@@ -1588,39 +1593,41 @@ const AdminDashboard: React.FC = () => {
               <Settings className="w-5 h-5" />
               Update Order Status
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-2">
-                  Order: <span className="font-semibold text-gray-900">#{selectedOrderForUpdate?.id.slice(0, 8)}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Customer: <span className="font-semibold text-gray-900">{selectedOrderForUpdate?.customer_name || selectedOrderForUpdate?.customer_email}</span>
-                </p>
-              </div>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Order: <span className="font-semibold text-gray-900">#{selectedOrderForUpdate?.id.slice(0, 8)}</span>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Customer: <span className="font-semibold text-gray-900">{selectedOrderForUpdate?.customer_name || selectedOrderForUpdate?.customer_email}</span>
+                  </p>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="orderStatus" className="text-sm font-medium text-gray-700">
-                  Select New Status
-                </Label>
-                <select
-                  id="orderStatus"
-                  value={newOrderStatus}
-                  onChange={(e) => setNewOrderStatus(e.target.value as Order['status'])}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isUpdatingOrder}
-                >
-                  <option value="pending">⏳ Pending</option>
-                  <option value="processing">🔄 Processing</option>
-                  <option value="shipped">🚚 Shipped</option>
-                  <option value="delivered">✅ Delivered</option>
-                  <option value="cancelled">❌ Cancelled</option>
-                </select>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="orderStatus" className="text-sm font-medium text-gray-700">
+                    Select New Status
+                  </Label>
+                  <select
+                    id="orderStatus"
+                    value={newOrderStatus}
+                    onChange={(e) => setNewOrderStatus(e.target.value as Order['status'])}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isUpdatingOrder}
+                  >
+                    <option value="pending">⏳ Pending</option>
+                    <option value="processing">🔄 Processing</option>
+                    <option value="shipped">🚚 Shipped</option>
+                    <option value="delivered">✅ Delivered</option>
+                    <option value="cancelled">❌ Cancelled</option>
+                  </select>
+                </div>
 
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-xs text-blue-800">
-                  💡 <strong>Tip:</strong> Customers will see this status update in their order history.
-                </p>
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="text-xs text-blue-800">
+                    💡 <strong>Tip:</strong> Customers will see this status update in their order history.
+                  </p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1629,7 +1636,10 @@ const AdminDashboard: React.FC = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmOrderStatusUpdate}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmOrderStatusUpdate();
+              }}
               disabled={isUpdatingOrder}
               className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-600"
             >
