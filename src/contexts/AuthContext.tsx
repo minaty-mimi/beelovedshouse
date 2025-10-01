@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase, auth } from '../lib/supabase';
+import { User } from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { supabase } from '../lib/supabase';
 
 interface UserProfile {
   uid: string;
@@ -45,178 +47,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check if user is admin
   const isAdmin = userProfile?.role === 'admin';
 
-  // Create user profile in Supabase
-  const createUserProfile = useCallback(async (user: User) => {
-    console.log('AuthContext: Creating user profile for:', user.id, user.email);
-
-    // If Supabase is not configured, use default profile
-    if (!supabase) {
-      console.log('AuthContext: Supabase not configured, using default profile');
-      setUserProfile({
-        uid: user.id,
-        email: user.email || '',
-        displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
-        role: user.email === 'beelovedshouse@gmail.com' ? 'admin' : 'user',
-        createdAt: new Date(),
-        lastLoginAt: new Date()
-      });
-      return;
-    }
-
-    try {
-      // First check if profile already exists
-      const { data: existingProfile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (existingProfile) {
-        console.log('AuthContext: Profile already exists:', existingProfile);
-        setUserProfile({
-          uid: existingProfile.id,
-          email: existingProfile.email,
-          displayName: existingProfile.display_name,
-          role: existingProfile.role,
-          createdAt: new Date(existingProfile.created_at),
-          lastLoginAt: new Date(existingProfile.last_login_at)
-        });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: user.id,
-          email: user.email,
-          display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
-          role: user.email === 'beelovedshouse@gmail.com' ? 'admin' : 'user', // Set admin role for known admin
-          created_at: new Date().toISOString(),
-          last_login_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('AuthContext: Error creating user profile:', error);
-        return;
-      }
-
-      if (data) {
-        console.log('AuthContext: User profile created:', data);
-        setUserProfile({
-          uid: data.id,
-          email: data.email,
-          displayName: data.display_name,
-          role: data.role,
-          createdAt: new Date(data.created_at),
-          lastLoginAt: new Date(data.last_login_at)
-        });
-        console.log('AuthContext: isAdmin check for new profile:', data.role === 'admin');
-      }
-    } catch (error) {
-      console.error('AuthContext: Exception in createUserProfile:', error);
-    }
-  }, []);
-
-  // Load user profile from Supabase
+  // Load user profile
   const loadUserProfile = useCallback(async (user: User) => {
-    console.log('AuthContext: Loading user profile for user:', user.id, user.email);
+    console.log('AuthContext: Loading user profile for user:', user.uid, user.email);
 
-    // If Supabase is not configured, skip database operations
-    if (!supabase) {
-      console.log('AuthContext: Supabase not configured, using default profile');
-      setUserProfile({
-        uid: user.id,
-        email: user.email || '',
-        displayName: user.email?.split('@')[0] || 'User',
-        role: 'user', // Default to user, can be changed later
-        createdAt: new Date(),
-        lastLoginAt: new Date()
-      });
-      return;
-    }
-
-    try {
-      console.log('AuthContext: Querying user_profiles table...');
-
-      // Add timeout to the query
-      const queryPromise = supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Query timeout')), 10000)
-      );
-
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as { data: any; error: any };
-
-      console.log('AuthContext: Query completed - data:', data, 'error:', error);
-
-      if (error) {
-        console.error('AuthContext: Error loading user profile:', error);
-        // If there's an error, create the profile
-        console.log('AuthContext: Creating profile due to error...');
-        await createUserProfile(user);
-        return;
-      }
-
-      if (data) {
-        console.log('AuthContext: User profile loaded:', data);
-        setUserProfile({
-          uid: data.id,
-          email: data.email,
-          displayName: data.display_name,
-          role: data.role,
-          createdAt: new Date(data.created_at),
-          lastLoginAt: new Date(data.last_login_at)
-        });
-        console.log('AuthContext: isAdmin check:', data.role === 'admin');
-        console.log('AuthContext: Profile loading completed successfully');
-      } else {
-        console.log('AuthContext: No user profile found, creating one...');
-        // Create profile if it doesn't exist
-        await createUserProfile(user);
-      }
-    } catch (error) {
-      console.error('AuthContext: Exception in loadUserProfile:', error);
-      // Try to create profile even on exception
-      try {
-        await createUserProfile(user);
-      } catch (createError) {
-        console.error('AuthContext: Failed to create profile:', createError);
-      }
-    }
-  }, [createUserProfile]);
+    // Set profile from Firebase user data
+    console.log('AuthContext: Using Firebase auth profile');
+    setUserProfile({
+      uid: user.uid,
+      email: user.email || '',
+      displayName: user.displayName || user.email?.split('@')[0] || 'User',
+      role: user.email === 'beelovedshouse@gmail.com' ? 'admin' : 'user', // Set admin role for known admin email
+      createdAt: new Date(user.metadata.creationTime || Date.now()),
+      lastLoginAt: new Date(user.metadata.lastSignInTime || Date.now())
+    });
+    console.log('AuthContext: Profile set for Firebase user');
+  }, []);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
-    const { error } = await auth.signIn(email, password);
-    if (error) {
-      throw new Error(error.message);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // User state will be updated by the auth state listener
+    } catch (error: unknown) {
+      throw new Error((error as Error).message);
     }
-    // User state will be updated by the auth state listener
   };
 
   // Sign up with email and password
   const signUp = async (email: string, password: string, displayName: string) => {
-    const { data, error } = await auth.signUp(email, password);
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (data?.user) {
-      // Update user metadata with display name if Supabase is available
-      if (supabase) {
-        await supabase.auth.updateUser({
-          data: { display_name: displayName }
-        });
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Set display name
+      if (displayName) {
+        await updateProfile(userCredential.user, { displayName });
       }
-
-      // Note: Profile creation will happen in the auth state listener
-      // when the user confirms their email and signs in
+      
+      // User state will be updated by the auth state listener
+    } catch (error: unknown) {
+      throw new Error((error as Error).message);
     }
   };
 
@@ -225,11 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('AuthContext: Starting logout process...');
 
     try {
-      const { error } = await auth.signOut();
-      if (error) {
-        console.error('AuthContext: Error during sign out:', error);
-        throw error;
-      }
+      await signOut(auth);
 
       console.log('AuthContext: Clearing local state...');
       setUser(null);
@@ -247,12 +113,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Reset password
   const resetPassword = async (email: string) => {
-    if (!supabase) {
-      throw new Error('Password reset requires Supabase configuration');
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) {
-      throw new Error(error.message);
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: unknown) {
+      throw new Error((error as Error).message);
     }
   };
 
@@ -260,57 +124,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user || !userProfile) return;
 
-    if (!supabase) {
-      // Update local state only
-      setUserProfile({ ...userProfile, ...updates });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          display_name: updates.displayName,
-          role: updates.role,
-          last_login_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setUserProfile({ ...userProfile, ...updates });
-    } catch (error) {
-      throw new Error((error as Error).message);
-    }
+    // Update local state only since we're using Firebase-only auth
+    setUserProfile({ ...userProfile, ...updates });
   };
 
   // Listen to auth state changes
   useEffect(() => {
-    // Clear any demo user data on startup to ensure we use real Supabase auth
-    console.log('AuthContext: Clearing demo user data on startup');
-    localStorage.removeItem('demo_user');
+    console.log('AuthContext: Setting up Firebase auth listener');
 
-    const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
-      console.log('AuthContext: Auth state change detected:', event, session);
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('AuthContext: User signed in:', session.user);
-        const user = session.user as User;
-        setUser(user);
-
-        // Load user profile from database for all users
-        await loadUserProfile(user);
-      } else if (event === 'SIGNED_OUT') {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('AuthContext: Auth state changed:', firebaseUser);
+      
+      if (firebaseUser) {
+        console.log('AuthContext: User signed in:', firebaseUser.uid, firebaseUser.email);
+        setUser(firebaseUser);
+        
+        // Load user profile
+        await loadUserProfile(firebaseUser);
+      } else {
         console.log('AuthContext: User signed out, clearing state');
         setUser(null);
         setUserProfile(null);
       }
+      
       setLoading(false);
     });
 
     return () => {
-      subscription.unsubscribe();
+      console.log('AuthContext: Cleaning up Firebase auth listener');
+      unsubscribe();
     };
   }, [loadUserProfile]);
 
