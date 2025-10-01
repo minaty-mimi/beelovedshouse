@@ -321,6 +321,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           },
           (payload) => {
             console.log('Products real-time update:', payload);
+            console.log('Event type:', payload.eventType);
+            
+            // Handle DELETE events immediately in local state
+            if (payload.eventType === 'DELETE' && payload.old) {
+              const deletedId = (payload.old as { id: number }).id;
+              console.log('Product deleted, removing from local state:', deletedId);
+              setProducts(prev => prev.filter(p => p.id !== deletedId));
+            }
+            
             // Debounce product reloads to prevent excessive calls
             setTimeout(() => {
               loadProducts();
@@ -719,6 +728,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     try {
+      console.log('Deleting product with ID:', id);
+      
       const { error } = await supabase
         .from('products')
         .delete()
@@ -734,12 +745,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return false;
       }
 
+      console.log('Product deleted successfully from database');
+
+      // Update local state immediately for instant feedback
+      setProducts(prevProducts => prevProducts.filter(p => p.id !== id));
+
       toast({
         title: "Success",
         description: "Product deleted successfully",
       });
 
-      // Reload products to reflect changes
+      // Also reload products to ensure consistency
       await loadProducts();
       return true;
     } catch (error) {
