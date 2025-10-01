@@ -19,7 +19,7 @@ A magical e-commerce platform for digital wallpapers, storybooks, and adorable a
 - **Routing**: React Router v6
 - **State Management**: React Context + TanStack Query
 - **Authentication**: Firebase Authentication with Firestore
-- **Payments**: Stripe integration ready
+- **Payments**: Paystack integration ready
 - **PWA**: Vite PWA plugin with Workbox
 - **Testing**: Vitest + Testing Library
 - **Linting**: ESLint with TypeScript support
@@ -47,7 +47,7 @@ npm install
 3. Set up environment variables (optional - demo mode works without them):
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase and Stripe credentials
+# Edit .env with your Supabase and Paystack credentials
 ```
 
 4. Start the development server:
@@ -100,9 +100,6 @@ VITE_FIREBASE_APP_ID=your_app_id
 # Supabase Configuration (optional - for additional features)
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Stripe Configuration
-VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
 
 ## Firebase Setup

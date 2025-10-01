@@ -48,7 +48,7 @@ The schema includes sample products to get you started. You can modify or remove
 
 1. Test the authentication flow
 2. Verify product management in the admin dashboard
-3. Set up Stripe for payments (if needed)
+3. Set up Paystack for payments (if needed)
 4. Configure email notifications (optional)
 
 ## Troubleshooting
