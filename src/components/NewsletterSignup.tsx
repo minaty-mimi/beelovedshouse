@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Mail, Gift, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from './ui/use-toast';
 
 interface NewsletterSignupProps {
   isPopup?: boolean;
@@ -9,16 +12,90 @@ interface NewsletterSignupProps {
 const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ isPopup = false, onClose }) => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
+    if (!email) return;
+
+    setIsLoading(true);
+
+    try {
+      if (!supabase) {
+        toast({
+          title: "Error",
+          description: "Newsletter service not available",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Check if email already exists
+      const { data: existing } = await supabase
+        .from('newsletter_subscribers')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Already subscribed",
+          description: "This email is already on our list!",
+        });
+        setIsSubmitted(true);
+        setTimeout(() => {
+          setIsSubmitted(false);
+          setEmail('');
+          if (onClose) onClose();
+        }, 2000);
+        return;
+      }
+
+      // Insert new subscriber
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert({
+          email: email,
+          user_id: user?.uid || null,
+          source: 'website',
+          is_active: true,
+          subscribed_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Newsletter signup error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to subscribe. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Success!
+      toast({
+        title: "Welcome to the family! 💝",
+        description: "Check your email for your free wallpapers!",
+      });
+
       setIsSubmitted(true);
       setTimeout(() => {
         setIsSubmitted(false);
         setEmail('');
         if (onClose) onClose();
       }, 2000);
+    } catch (error) {
+      console.error('Newsletter signup error:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,9 +150,10 @@ const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ isPopup = false, on
             
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-300 shadow-lg"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 rounded-full font-semibold text-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Get My Free Wallpapers ✨
+              {isLoading ? 'Subscribing...' : 'Get My Free Wallpapers ✨'}
             </button>
           </form>
         ) : (

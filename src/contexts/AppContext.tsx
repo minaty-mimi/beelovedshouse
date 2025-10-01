@@ -370,6 +370,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.log('Cart subscription status:', status);
         });
 
+      // Subscribe to wishlist table changes
+      const wishlistChannel = supabase
+        .channel('wishlist_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'wishlist'
+          },
+          (payload) => {
+            console.log('Wishlist real-time update:', payload);
+            // Only reload wishlist if the change is relevant to current user
+            const payloadData = payload.new as { user_id?: string } | null;
+            if (payloadData?.user_id === user?.id) {
+              setTimeout(() => {
+                loadWishlist();
+              }, 100);
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('Wishlist subscription status:', status);
+        });
+
     } catch (error) {
       console.error('Error setting up real-time subscriptions:', error);
     }
@@ -426,28 +451,114 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     transferCart();
   }, [firebaseUser?.uid, user, sessionId, loadCart]); // Only run when user ID changes
 
-  const addToWishlist = (id: number) => {
-    setWishlist(prev => {
-      if (prev.includes(id)) return prev;
+  const addToWishlist = async (id: number) => {
+    if (!user) {
       toast({
-        title: "Added to wishlist",
-        description: "Product has been added to your wishlist.",
+        title: "Sign in required",
+        description: "Please sign in to add items to your wishlist.",
+        variant: "destructive"
       });
-      return [...prev, id];
-    });
+      return;
+    }
+
+    try {
+      if (supabase) {
+        const { error } = await supabase
+          .from('wishlist')
+          .insert({
+            user_id: user.id,
+            product_id: id,
+            created_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error adding to wishlist:', error);
+          toast({
+            title: "Error",
+            description: "Failed to add to wishlist",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
+      setWishlist(prev => {
+        if (prev.includes(id)) return prev;
+        toast({
+          title: "Added to wishlist",
+          description: "Product has been added to your wishlist.",
+        });
+        return [...prev, id];
+      });
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add to wishlist",
+        variant: "destructive"
+      });
+    }
   };
 
-  const removeFromWishlist = (id: number) => {
-    setWishlist(prev => {
-      toast({
-        title: "Removed from wishlist",
-        description: "Product has been removed from your wishlist.",
+  const removeFromWishlist = async (id: number) => {
+    try {
+      if (supabase && user) {
+        const { error } = await supabase
+          .from('wishlist')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', id);
+
+        if (error) {
+          console.error('Error removing from wishlist:', error);
+        }
+      }
+
+      setWishlist(prev => {
+        toast({
+          title: "Removed from wishlist",
+          description: "Product has been removed from your wishlist.",
+        });
+        return prev.filter(itemId => itemId !== id);
       });
-      return prev.filter(itemId => itemId !== id);
-    });
+    } catch (error) {
+      console.error('Error removing from wishlist:', error);
+    }
   };
 
   const isInWishlist = (id: number) => wishlist.includes(id);
+
+  // Load wishlist from Supabase
+  const loadWishlist = useCallback(async () => {
+    if (!user || !supabase) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .select('product_id')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error loading wishlist:', error);
+        return;
+      }
+
+      if (data) {
+        setWishlist(data.map(item => item.product_id));
+      }
+    } catch (error) {
+      console.error('Error loading wishlist:', error);
+    }
+  }, [user]);
+
+  // Load wishlist when user signs in
+  useEffect(() => {
+    if (user) {
+      loadWishlist();
+    } else {
+      setWishlist([]);
+    }
+  }, [user, loadWishlist]);
 
   const addToCart = async (id: number, quantity: number = 1) => {
     const product = products.find(p => p.id === id);

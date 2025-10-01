@@ -17,16 +17,11 @@ import {
   Settings,
   Heart,
   Mail,
-  MessageSquare,
-  FileText,
-  CreditCard,
   Truck,
   Tag,
   Download,
   Send,
-  UserCheck,
-  Shield,
-  Globe
+  Shield
 } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,7 +30,6 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
 import { FileUpload } from '../components/FileUpload';
 import { supabase } from '../lib/supabase';
@@ -67,11 +61,10 @@ interface Order {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { products, updateInventory, getLowStockProducts, deleteProduct, addProduct } = useAppContext();
-  const { user, userProfile, isAdmin, logout, loading } = useAuth();
+  const { products, getLowStockProducts, deleteProduct, addProduct } = useAppContext();
+  const { user, isAdmin, logout, loading } = useAuth();
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newProduct, setNewProduct] = useState({
     title: '',
     price: '',
@@ -264,7 +257,6 @@ const AdminDashboard: React.FC = () => {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
     const success = await addProduct({
       title: newProduct.title,
@@ -301,15 +293,20 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleUpdateInventory = (productId: number, newInventory: number) => {
-    updateInventory(productId, newInventory);
-  };
-
-  const totalRevenue = products.reduce((sum, product) => sum + (product.price * (100 - product.inventory)), 0);
+  // Calculate real-time stats from Supabase data
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
   const lowStockProducts = getLowStockProducts();
   const totalProducts = products.length;
   const digitalProducts = products.filter(p => p.type === 'digital').length;
   const physicalProducts = products.filter(p => p.type === 'physical').length;
+  const totalOrders = orders.length;
+  const pendingOrders = orders.filter(o => o.status === 'pending').length;
+  const shippedToday = orders.filter(o => {
+    const today = new Date().toDateString();
+    return o.status === 'shipped' && new Date(o.updated_at).toDateString() === today;
+  }).length;
+  const totalCustomers = customers.length;
+  const totalNewsletterSubscribers = newsletterSubscribers.length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-pink-50 to-purple-100">
@@ -426,7 +423,7 @@ const AdminDashboard: React.FC = () => {
                 <CardContent>
                   <div className="text-2xl font-bold text-amber-600">₦{totalRevenue.toLocaleString()}</div>
                   <p className="text-xs text-gray-600">
-                    Estimated potential
+                    {ordersLoading ? 'Loading...' : `From ${totalOrders} orders`}
                   </p>
                 </CardContent>
               </Card>
@@ -458,34 +455,46 @@ const AdminDashboard: React.FC = () => {
               </Card>
             </div>
 
-            {/* Recent Activity */}
+            {/* Recent Activity - Real-time data */}
             <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-gray-800">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">Dashboard accessed</p>
-                      <p className="text-xs text-gray-600">Just now</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">Inventory checked</p>
-                      <p className="text-xs text-gray-600">2 minutes ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">Low stock alert for Tote Bags</p>
-                      <p className="text-xs text-gray-600">5 minutes ago</p>
-                    </div>
-                  </div>
+                  {orders.length === 0 && customers.length === 0 && newsletterSubscribers.length === 0 && products.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">No recent activity yet</p>
+                  ) : (
+                    <>
+                      {orders.slice(0, 3).map((order) => (
+                        <div key={order.id} className="flex items-center space-x-4">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800">New order #{order.id.slice(0, 8)}</p>
+                            <p className="text-xs text-gray-600">{new Date(order.created_at).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {newsletterSubscribers.slice(0, 2).map((sub) => (
+                        <div key={sub.id} className="flex items-center space-x-4">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800">Newsletter signup: {sub.email}</p>
+                            <p className="text-xs text-gray-600">{new Date(sub.subscribed_at).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {lowStockProducts.slice(0, 2).map((product) => (
+                        <div key={product.id} className="flex items-center space-x-4">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800">Low stock alert: {product.title}</p>
+                            <p className="text-xs text-gray-600">Only {product.inventory} left</p>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -520,7 +529,7 @@ const AdminDashboard: React.FC = () => {
                   <ShoppingCart className="h-4 w-4 text-amber-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-amber-600">0</div>
+                  <div className="text-2xl font-bold text-amber-600">{ordersLoading ? '...' : totalOrders}</div>
                   <p className="text-xs text-gray-600">All time</p>
                 </CardContent>
               </Card>
@@ -531,7 +540,7 @@ const AdminDashboard: React.FC = () => {
                   <AlertTriangle className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-orange-600">0</div>
+                  <div className="text-2xl font-bold text-orange-600">{ordersLoading ? '...' : pendingOrders}</div>
                   <p className="text-xs text-gray-600">Awaiting processing</p>
                 </CardContent>
               </Card>
@@ -542,7 +551,7 @@ const AdminDashboard: React.FC = () => {
                   <Truck className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">0</div>
+                  <div className="text-2xl font-bold text-blue-600">{ordersLoading ? '...' : shippedToday}</div>
                   <p className="text-xs text-gray-600">Orders shipped</p>
                 </CardContent>
               </Card>
@@ -553,23 +562,53 @@ const AdminDashboard: React.FC = () => {
                   <DollarSign className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">$0.00</div>
-                  <p className="text-xs text-gray-600">This month</p>
+                  <div className="text-2xl font-bold text-green-600">₦{ordersLoading ? '...' : totalRevenue.toLocaleString()}</div>
+                  <p className="text-xs text-gray-600">Total sales</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Orders Table */}
+            {/* Orders Table - Real-time */}
             <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-gray-800">Recent Orders</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">No orders yet</h3>
-                  <p className="text-gray-500">Orders will appear here once customers start purchasing products.</p>
-                </div>
+                {ordersLoading ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Loading orders...</p>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">No orders yet</h3>
+                    <p className="text-gray-500">Orders will appear here once customers start purchasing products.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.slice(0, 10).map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-4 border border-amber-200 rounded-lg bg-white/50">
+                        <div>
+                          <p className="font-medium text-gray-800">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-sm text-gray-600">{new Date(order.created_at).toLocaleString()}</p>
+                          <p className="text-xs text-gray-500">{order.order_items?.length || 0} items</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-amber-600">₦{order.total_amount.toLocaleString()}</p>
+                          <span className={`inline-block px-2 py-1 rounded text-xs ${
+                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                            order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                            order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -681,7 +720,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="md:col-span-2">
                     <Label htmlFor="image" className="text-gray-700">Product Image</Label>
                     <FileUpload
-                      onUploadSuccess={(url, fileName) => {
+                      onUploadSuccess={(url) => {
                         setNewProduct({...newProduct, image: url});
                       }}
                       onUploadError={(error) => {
@@ -794,19 +833,19 @@ const AdminDashboard: React.FC = () => {
                   <Users className="h-4 w-4 text-amber-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-amber-600">0</div>
+                  <div className="text-2xl font-bold text-amber-600">{customersLoading ? '...' : totalCustomers}</div>
                   <p className="text-xs text-gray-600">Registered users</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-700">Active Customers</CardTitle>
-                  <UserCheck className="h-4 w-4 text-green-600" />
+                  <CardTitle className="text-sm font-medium text-gray-700">Newsletter Subscribers</CardTitle>
+                  <Mail className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">0</div>
-                  <p className="text-xs text-gray-600">Active this month</p>
+                  <div className="text-2xl font-bold text-green-600">{subscribersLoading ? '...' : totalNewsletterSubscribers}</div>
+                  <p className="text-xs text-gray-600">Email subscribers</p>
                 </CardContent>
               </Card>
 
@@ -816,7 +855,11 @@ const AdminDashboard: React.FC = () => {
                   <TrendingUp className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">0</div>
+                  <div className="text-2xl font-bold text-blue-600">{customersLoading ? '...' : customers.filter(c => {
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    return new Date(c.created_at) > weekAgo;
+                  }).length}</div>
                   <p className="text-xs text-gray-600">This week</p>
                 </CardContent>
               </Card>
@@ -827,25 +870,43 @@ const AdminDashboard: React.FC = () => {
                   <DollarSign className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-purple-600">₦0</div>
-                  <p className="text-xs text-gray-600">Per customer</p>
+                  <div className="text-2xl font-bold text-purple-600">₦{ordersLoading ? '...' : totalOrders > 0 ? Math.round(totalRevenue / totalOrders).toLocaleString() : '0'}</div>
+                  <p className="text-xs text-gray-600">Per order</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Customer Management */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Customer List */}
+              {/* Customer List - Real-time */}
               <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-gray-800">Customer Database</CardTitle>
+                  <CardTitle className="text-gray-800">Customer Database ({totalCustomers})</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-600 mb-2">No customers yet</h3>
-                    <p className="text-gray-500">Customer data will appear here once users register and make purchases.</p>
-                  </div>
+                  {customersLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Loading customers...</p>
+                    </div>
+                  ) : customers.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-600 mb-2">No customers yet</h3>
+                      <p className="text-gray-500">Customer data will appear here once users register.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {customers.map((customer) => (
+                        <div key={customer.id} className="flex items-center justify-between p-3 border border-amber-200 rounded-lg bg-white/50">
+                          <div>
+                            <p className="font-medium text-gray-800">{customer.full_name || 'N/A'}</p>
+                            <p className="text-sm text-gray-600">{customer.email || 'No email'}</p>
+                            <p className="text-xs text-gray-500">Joined: {new Date(customer.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -858,10 +919,10 @@ const AdminDashboard: React.FC = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <MessageSquare className="w-5 h-5 text-blue-600" />
+                        <Mail className="w-5 h-5 text-blue-600" />
                         <div>
-                          <p className="font-medium text-gray-800">Support Tickets</p>
-                          <p className="text-sm text-gray-600">0 open tickets</p>
+                          <p className="font-medium text-gray-800">Newsletter Subscribers</p>
+                          <p className="text-sm text-gray-600">{subscribersLoading ? 'Loading...' : `${totalNewsletterSubscribers} subscribers`}</p>
                         </div>
                       </div>
                       <Button size="sm" variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
@@ -871,27 +932,27 @@ const AdminDashboard: React.FC = () => {
 
                     <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-green-600" />
+                        <Users className="w-5 h-5 text-green-600" />
                         <div>
-                          <p className="font-medium text-gray-800">Email Campaigns</p>
-                          <p className="text-sm text-gray-600">Send newsletters & promotions</p>
+                          <p className="font-medium text-gray-800">Total Customers</p>
+                          <p className="text-sm text-gray-600">{customersLoading ? 'Loading...' : `${totalCustomers} registered`}</p>
                         </div>
                       </div>
                       <Button size="sm" variant="outline" className="border-green-200 text-green-700 hover:bg-green-50">
-                        Create
+                        View All
                       </Button>
                     </div>
 
                     <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Heart className="w-5 h-5 text-purple-600" />
+                        <ShoppingCart className="w-5 h-5 text-purple-600" />
                         <div>
-                          <p className="font-medium text-gray-800">Loyalty Program</p>
-                          <p className="text-sm text-gray-600">Manage rewards & points</p>
+                          <p className="font-medium text-gray-800">Total Orders</p>
+                          <p className="text-sm text-gray-600">{ordersLoading ? 'Loading...' : `${totalOrders} orders`}</p>
                         </div>
                       </div>
                       <Button size="sm" variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50">
-                        Configure
+                        View All
                       </Button>
                     </div>
                   </div>
@@ -911,10 +972,10 @@ const AdminDashboard: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-amber-600">₦0</div>
-                  <p className="text-sm text-gray-600">Total sales this month</p>
+                  <div className="text-3xl font-bold text-amber-600">₦{ordersLoading ? '...' : totalRevenue.toLocaleString()}</div>
+                  <p className="text-sm text-gray-600">Total revenue</p>
                   <div className="mt-4 text-sm">
-                    <span className="text-green-600">+0%</span> from last month
+                    <span className="text-green-600">{ordersLoading ? '...' : totalOrders}</span> orders completed
                   </div>
                 </CardContent>
               </Card>
@@ -927,10 +988,10 @@ const AdminDashboard: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-amber-600">0</div>
+                  <div className="text-3xl font-bold text-amber-600">{ordersLoading ? '...' : totalOrders}</div>
                   <p className="text-sm text-gray-600">Total orders</p>
                   <div className="mt-4 text-sm">
-                    <span className="text-blue-600">0</span> pending
+                    <span className="text-blue-600">{ordersLoading ? '...' : pendingOrders}</span> pending
                   </div>
                 </CardContent>
               </Card>
@@ -943,10 +1004,10 @@ const AdminDashboard: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-amber-600">0</div>
+                  <div className="text-3xl font-bold text-amber-600">{customersLoading ? '...' : totalCustomers}</div>
                   <p className="text-sm text-gray-600">Registered customers</p>
                   <div className="mt-4 text-sm">
-                    <span className="text-purple-600">0</span> new this month
+                    <span className="text-purple-600">{subscribersLoading ? '...' : totalNewsletterSubscribers}</span> newsletter subscribers
                   </div>
                 </CardContent>
               </Card>
@@ -954,7 +1015,7 @@ const AdminDashboard: React.FC = () => {
 
             <Card className="bg-white/80 backdrop-blur-sm border-amber-200 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-gray-800">Top Products</CardTitle>
+                <CardTitle className="text-gray-800">Available Products</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -970,7 +1031,9 @@ const AdminDashboard: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-amber-600">₦{product.price.toLocaleString()}</div>
-                          <div className="text-sm text-gray-600">0 sold</div>
+                          <div className={`text-sm ${product.inventory <= product.low_stock_threshold ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
+                            Stock: {product.inventory}
+                          </div>
                         </div>
                       </div>
                     ))
