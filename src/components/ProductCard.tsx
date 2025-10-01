@@ -12,6 +12,12 @@ interface ProductCardProps {
   image: string;
   category: string;
   type: 'digital' | 'physical';
+  description?: string;
+  stock_quantity?: number;
+  stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'unlimited';
+  average_rating?: number;
+  review_count?: number;
+  onQuickView?: () => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -21,7 +27,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   originalPrice,
   image,
   category,
-  type
+  type,
+  onQuickView
 }) => {
   const { isInWishlist, addToWishlist, removeFromWishlist, addToCart } = useAppContext();
   const navigate = useNavigate();
@@ -46,6 +53,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
       trackAddToCart({ id, title, category, price }, 1);
     } catch (error) {
       console.error('Failed to add to cart:', error);
+    }
+  };
+
+  const handleBuyNow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await addToCart(id, 1);
+      trackEvent('buy_now_click', 'conversion', title);
+      // Navigate directly to checkout
+      navigate('/checkout');
+    } catch (error) {
+      console.error('Failed to buy now:', error);
     }
   };
 
@@ -94,6 +113,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
             }`} 
           />
         </button>
+
+        {/* Quick View Button - Appears on Hover */}
+        {onQuickView && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onQuickView();
+            }}
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/95 hover:bg-white text-gray-800 px-4 py-2 rounded-lg font-semibold shadow-lg text-sm"
+          >
+            Quick View
+          </button>
+        )}
       </div>
 
       {/* Product Info */}
@@ -125,13 +157,32 @@ const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
 
-        {/* Buy Button - Always Visible */}
-        <button
-          onClick={handleAddToCart}
-          className="w-full mt-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
-        >
-          {type === 'digital' ? 'Download Now' : 'Add to Cart'}
-        </button>
+        {/* Action Buttons - Add to Cart + Buy Now */}
+        <div className="mt-3 flex gap-2">
+          {type === 'physical' ? (
+            <>
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 bg-amber-100 text-amber-700 hover:bg-amber-200 py-2 px-4 rounded-lg font-semibold transition-all duration-200"
+              >
+                Add to Cart
+              </button>
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+              >
+                Buy Now
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleBuyNow}
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+            >
+              Download Now
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

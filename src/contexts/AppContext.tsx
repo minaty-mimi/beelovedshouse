@@ -12,9 +12,14 @@ export interface Product {
   image: string;
   category: string;
   type: 'digital' | 'physical';
-  inventory: number; // Stock quantity
-  low_stock_threshold: number; // Alert when stock drops below this
-  description?: string; // Product description
+  download_url?: string;
+  description: string; // Made required
+  inventory: number; // Stock quantity (legacy)
+  low_stock_threshold: number; // Alert when stock drops below this (legacy)
+  stock_quantity?: number; // New stock field
+  stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'unlimited';
+  average_rating?: number;
+  review_count?: number;
   created_at?: string;
   updated_at?: string;
 }

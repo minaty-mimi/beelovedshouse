@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import ProductCard from '@/components/ProductCard';
+import { QuickViewModal } from '@/components/QuickViewModal';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import type { Product } from '@/types/ecommerce';
 
 const Products: React.FC = () => {
   const { products } = useAppContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   // Update URL when search term changes
   useEffect(() => {
@@ -104,9 +107,22 @@ const Products: React.FC = () => {
             {/* Products Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
               {filteredProducts.map(product => (
-                <ProductCard key={product.id} {...product} />
+                <ProductCard 
+                  key={product.id} 
+                  {...product} 
+                  onQuickView={() => setQuickViewProduct(product)}
+                />
               ))}
             </div>
+
+            {/* Quick View Modal */}
+            {quickViewProduct && (
+              <QuickViewModal
+                product={quickViewProduct}
+                isOpen={!!quickViewProduct}
+                onClose={() => setQuickViewProduct(null)}
+              />
+            )}
 
             {/* Stats */}
             <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 text-center shadow-xl">
