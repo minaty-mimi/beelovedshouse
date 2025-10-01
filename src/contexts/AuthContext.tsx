@@ -49,6 +49,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const createUserProfile = useCallback(async (user: User) => {
     console.log('AuthContext: Creating user profile for:', user.id, user.email);
 
+    // If Supabase is not configured, use default profile
+    if (!supabase) {
+      console.log('AuthContext: Supabase not configured, using default profile');
+      setUserProfile({
+        uid: user.id,
+        email: user.email || '',
+        displayName: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
+        role: user.email === 'beelovedshouse@gmail.com' ? 'admin' : 'user',
+        createdAt: new Date(),
+        lastLoginAt: new Date()
+      });
+      return;
+    }
+
     try {
       // First check if profile already exists
       const { data: existingProfile } = await supabase
@@ -108,6 +122,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Load user profile from Supabase
   const loadUserProfile = useCallback(async (user: User) => {
     console.log('AuthContext: Loading user profile for user:', user.id, user.email);
+
+    // If Supabase is not configured, skip database operations
+    if (!supabase) {
+      console.log('AuthContext: Supabase not configured, using default profile');
+      setUserProfile({
+        uid: user.id,
+        email: user.email || '',
+        displayName: user.email?.split('@')[0] || 'User',
+        role: 'user', // Default to user, can be changed later
+        createdAt: new Date(),
+        lastLoginAt: new Date()
+      });
+      return;
+    }
 
     try {
       console.log('AuthContext: Querying user_profiles table...');
@@ -180,10 +208,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     if (data?.user) {
-      // Update user metadata with display name
-      await supabase.auth.updateUser({
-        data: { display_name: displayName }
-      });
+      // Update user metadata with display name if Supabase is available
+      if (supabase) {
+        await supabase.auth.updateUser({
+          data: { display_name: displayName }
+        });
+      }
 
       // Note: Profile creation will happen in the auth state listener
       // when the user confirms their email and signs in
@@ -217,6 +247,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Reset password
   const resetPassword = async (email: string) => {
+    if (!supabase) {
+      throw new Error('Password reset requires Supabase configuration');
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) {
       throw new Error(error.message);
@@ -226,6 +259,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Update user profile
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user || !userProfile) return;
+
+    if (!supabase) {
+      // Update local state only
+      setUserProfile({ ...userProfile, ...updates });
+      return;
+    }
 
     try {
       const { error } = await supabase
