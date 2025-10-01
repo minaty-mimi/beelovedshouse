@@ -12,15 +12,6 @@ export const supabase = (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes
 
 console.log('Supabase client created successfully');
 
-// Test the client connection if available
-if (supabase) {
-  supabase.auth.getSession().then(({ data, error }) => {
-    console.log('Supabase client test - session:', !!data.session, 'error:', error);
-  }).catch(err => {
-    console.error('Supabase client test failed:', err);
-  });
-}
-
 // Database types
 export interface Database {
   public: {

@@ -151,7 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setTimeout(() => reject(new Error('Query timeout')), 10000)
       );
 
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as { data: any; error: any };
 
       console.log('AuthContext: Query completed - data:', data, 'error:', error);
 
