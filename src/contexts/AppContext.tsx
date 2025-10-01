@@ -64,6 +64,9 @@ interface AppContextType {
   getLowStockProducts: () => Product[];
   // Product management
   refreshProducts: () => Promise<void>;
+  deleteProduct: (id: number) => Promise<boolean>;
+  addProduct: (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
+  updateProduct: (id: number, updates: Partial<Product>) => Promise<boolean>;
 }
 
 const defaultAppContext: AppContextType = {
@@ -89,6 +92,9 @@ const defaultAppContext: AppContextType = {
   isLowStock: () => false,
   getLowStockProducts: () => [],
   refreshProducts: async () => {},
+  deleteProduct: async () => false,
+  addProduct: async () => false,
+  updateProduct: async () => false,
 };
 
 const AppContext = createContext<AppContextType>(defaultAppContext);
@@ -583,6 +589,158 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadProducts();
   };
 
+  // Delete product
+  const deleteProduct = async (id: number): Promise<boolean> => {
+    if (!supabase) {
+      toast({
+        title: "Error",
+        description: "Database not configured",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting product:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete product: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      });
+
+      // Reload products to reflect changes
+      await loadProducts();
+      return true;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Add product
+  const addProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> => {
+    if (!supabase) {
+      toast({
+        title: "Error",
+        description: "Database not configured",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .insert({
+          title: product.title,
+          price: product.price,
+          original_price: product.original_price,
+          image: product.image,
+          category: product.category,
+          type: product.type,
+          inventory: product.inventory,
+          low_stock_threshold: product.low_stock_threshold,
+          description: product.description,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error adding product:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add product: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      toast({
+        title: "Success",
+        description: "Product added successfully",
+      });
+
+      // Reload products to reflect changes
+      await loadProducts();
+      return true;
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add product",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Update product
+  const updateProduct = async (id: number, updates: Partial<Product>): Promise<boolean> => {
+    if (!supabase) {
+      toast({
+        title: "Error",
+        description: "Database not configured",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating product:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update product: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      });
+
+      // Reload products to reflect changes
+      await loadProducts();
+      return true;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update product",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -608,6 +766,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isLowStock,
         getLowStockProducts,
         refreshProducts,
+        deleteProduct,
+        addProduct,
+        updateProduct,
       }}
     >
       {children}

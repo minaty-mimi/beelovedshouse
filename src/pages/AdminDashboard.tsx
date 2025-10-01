@@ -67,10 +67,11 @@ interface Order {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { products, updateInventory, getLowStockProducts } = useAppContext();
+  const { products, updateInventory, getLowStockProducts, deleteProduct, addProduct } = useAppContext();
   const { user, userProfile, isAdmin, logout, loading } = useAuth();
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newProduct, setNewProduct] = useState({
     title: '',
     price: '',
@@ -84,6 +85,10 @@ const AdminDashboard: React.FC = () => {
   });
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState<any[]>([]);
+  const [subscribersLoading, setSubscribersLoading] = useState(true);
 
   // Check admin authentication
   useEffect(() => {
@@ -124,12 +129,66 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Set up real-time subscription for orders
+  // Load customers from Supabase
+  const loadCustomers = async () => {
+    try {
+      setCustomersLoading(true);
+      if (!supabase) return;
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading customers:', error);
+        return;
+      }
+
+      if (data) {
+        setCustomers(data);
+      }
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  // Load newsletter subscribers from Supabase
+  const loadNewsletterSubscribers = async () => {
+    try {
+      setSubscribersLoading(true);
+      if (!supabase) return;
+
+      const { data, error } = await supabase
+        .from('newsletter_subscribers')
+        .select('*')
+        .order('subscribed_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading newsletter subscribers:', error);
+        return;
+      }
+
+      if (data) {
+        setNewsletterSubscribers(data);
+      }
+    } catch (error) {
+      console.error('Error loading newsletter subscribers:', error);
+    } finally {
+      setSubscribersLoading(false);
+    }
+  };
+
+  // Set up real-time subscriptions for all admin data
   useEffect(() => {
     if (!supabase) return;
 
-    // Load initial orders
+    // Load initial data
     loadOrders();
+    loadCustomers();
+    loadNewsletterSubscribers();
 
     // Subscribe to orders table changes
     const ordersChannel = supabase
@@ -143,16 +202,51 @@ const AdminDashboard: React.FC = () => {
         },
         (payload) => {
           console.log('Admin orders real-time update:', payload);
-          // Reload orders when any change occurs
           loadOrders();
         }
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
+    // Subscribe to user_profiles table changes
+    const customersChannel = supabase
+      .channel('admin_customers_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_profiles'
+        },
+        (payload) => {
+          console.log('Admin customers real-time update:', payload);
+          loadCustomers();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to newsletter_subscribers table changes
+    const subscribersChannel = supabase
+      .channel('admin_subscribers_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'newsletter_subscribers'
+        },
+        (payload) => {
+          console.log('Admin newsletter real-time update:', payload);
+          loadNewsletterSubscribers();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
     return () => {
       if (supabase) {
         supabase.removeChannel(ordersChannel);
+        supabase.removeChannel(customersChannel);
+        supabase.removeChannel(subscribersChannel);
       }
     };
   }, []);
@@ -168,20 +262,43 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Product added successfully! (Demo - would save to database)');
-    setNewProduct({
-      title: '',
-      price: '',
-      originalPrice: '',
-      category: '',
-      type: 'digital',
-      inventory: '',
-      low_stock_threshold: '',
-      image: '',
-      description: ''
+    setIsSubmitting(true);
+
+    const success = await addProduct({
+      title: newProduct.title,
+      price: parseInt(newProduct.price),
+      original_price: newProduct.originalPrice ? parseInt(newProduct.originalPrice) : undefined,
+      image: newProduct.image,
+      category: newProduct.category,
+      type: newProduct.type,
+      inventory: parseInt(newProduct.inventory),
+      low_stock_threshold: parseInt(newProduct.low_stock_threshold),
+      description: newProduct.description
     });
+
+    if (success) {
+      setNewProduct({
+        title: '',
+        price: '',
+        originalPrice: '',
+        category: '',
+        type: 'digital',
+        inventory: '',
+        low_stock_threshold: '',
+        image: '',
+        description: ''
+      });
+    }
+
+    setIsSubmitting(false);
+  };
+
+  const handleDeleteProduct = async (productId: number, productTitle: string) => {
+    if (window.confirm(`Are you sure you want to delete "${productTitle}"?`)) {
+      await deleteProduct(productId);
+    }
   };
 
   const handleUpdateInventory = (productId: number, newInventory: number) => {
@@ -630,7 +747,12 @@ const AdminDashboard: React.FC = () => {
                             <Button size="sm" variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-red-200 text-red-600 hover:bg-red-50"
+                              onClick={() => handleDeleteProduct(product.id, product.title)}
+                            >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
