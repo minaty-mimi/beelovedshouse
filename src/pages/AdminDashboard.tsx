@@ -46,12 +46,15 @@ interface OrderItem {
     title: string;
     price: number;
     image: string;
+    category: string;
   };
 }
 
 interface Order {
   id: string;
   user_id: string;
+  customer_name?: string;
+  customer_email?: string;
   total_amount: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   shipping_address: Record<string, unknown>;
@@ -285,8 +288,6 @@ const AdminDashboard: React.FC = () => {
         description: ''
       });
     }
-
-    setIsSubmitting(false);
   };
 
   const handleDeleteProduct = async (productId: number, productTitle: string) => {

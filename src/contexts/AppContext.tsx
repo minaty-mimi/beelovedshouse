@@ -306,6 +306,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let productsChannel: ReturnType<typeof supabase.channel> | null = null;
     let ordersChannel: ReturnType<typeof supabase.channel> | null = null;
     let cartChannel: ReturnType<typeof supabase.channel> | null = null;
+    let wishlistChannel: ReturnType<typeof supabase.channel> | null = null;
 
     try {
       // Subscribe to products table changes
@@ -376,7 +377,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
 
       // Subscribe to wishlist table changes
-      const wishlistChannel = supabase
+      wishlistChannel = supabase
         .channel('wishlist_changes')
         .on(
           'postgres_changes',
@@ -411,6 +412,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (productsChannel) supabase.removeChannel(productsChannel);
           if (ordersChannel) supabase.removeChannel(ordersChannel);
           if (cartChannel) supabase.removeChannel(cartChannel);
+          if (wishlistChannel) supabase.removeChannel(wishlistChannel);
           console.log('Real-time subscriptions cleaned up');
         } catch (error) {
           console.error('Error cleaning up subscriptions:', error);

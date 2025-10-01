@@ -1,7 +1,7 @@
 -- Add reviews and ratings table
 CREATE TABLE IF NOT EXISTS public.reviews (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL,
     user_name TEXT NOT NULL,
     user_email TEXT NOT NULL,
@@ -40,7 +40,7 @@ ADD COLUMN IF NOT EXISTS stock_status TEXT DEFAULT 'in_stock' CHECK (stock_statu
 -- Add product variants table
 CREATE TABLE IF NOT EXISTS public.product_variants (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     type TEXT NOT NULL, -- 'size', 'color', 'material', etc.
     price_adjustment NUMERIC DEFAULT 0,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
 CREATE TABLE IF NOT EXISTS public.recently_viewed (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id TEXT NOT NULL,
-    product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
     viewed_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     UNIQUE(user_id, product_id)
 );
@@ -156,7 +156,7 @@ CREATE TRIGGER trigger_update_product_rating
 -- Function to track recently viewed
 CREATE OR REPLACE FUNCTION track_recently_viewed(
     p_user_id TEXT,
-    p_product_id UUID
+    p_product_id INTEGER
 )
 RETURNS VOID AS $$
 BEGIN
