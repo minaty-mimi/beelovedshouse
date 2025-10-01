@@ -84,6 +84,12 @@ const AdminDashboard: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<{ id: number; title: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Order management states
+  const [orderStatusDialogOpen, setOrderStatusDialogOpen] = useState(false);
+  const [selectedOrderForUpdate, setSelectedOrderForUpdate] = useState<Order | null>(null);
+  const [newOrderStatus, setNewOrderStatus] = useState<Order['status']>('pending');
+  const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
   const [newProduct, setNewProduct] = useState({
     title: '',
     price: '',
@@ -347,6 +353,195 @@ const AdminDashboard: React.FC = () => {
   const cancelDelete = () => {
     setDeleteDialogOpen(false);
     setProductToDelete(null);
+  };
+
+  // Order Management Functions
+  const handleUpdateOrderStatus = (order: Order) => {
+    setSelectedOrderForUpdate(order);
+    setNewOrderStatus(order.status);
+    setOrderStatusDialogOpen(true);
+  };
+
+  const confirmOrderStatusUpdate = async () => {
+    if (!selectedOrderForUpdate || !supabase) return;
+
+    setIsUpdatingOrder(true);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: newOrderStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedOrderForUpdate.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Updated Successfully! ✅",
+        description: `Order #${selectedOrderForUpdate.id.slice(0, 8)} status changed to ${newOrderStatus}`,
+      });
+
+      // Reload orders
+      const { data: updatedOrders } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            id,
+            order_id,
+            product_id,
+            quantity,
+            price,
+            products (
+              id,
+              title,
+              price,
+              image_url,
+              category
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (updatedOrders) {
+        setOrders(updatedOrders as Order[]);
+      }
+
+      setOrderStatusDialogOpen(false);
+      setSelectedOrderForUpdate(null);
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        title: "Update Failed",
+        description: "Unable to update order status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingOrder(false);
+    }
+  };
+
+  const handleCancelOrder = async (order: Order) => {
+    if (!window.confirm(`Cancel order #${order.id.slice(0, 8)} for ${order.customer_name || order.customer_email}?`)) {
+      return;
+    }
+
+    if (!supabase) return;
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Cancelled Successfully! 🚫",
+        description: `Order #${order.id.slice(0, 8)} has been cancelled`,
+      });
+
+      // Reload orders
+      const { data: updatedOrders } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            id,
+            order_id,
+            product_id,
+            quantity,
+            price,
+            products (
+              id,
+              title,
+              price,
+              image_url,
+              category
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (updatedOrders) {
+        setOrders(updatedOrders as Order[]);
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: "Cancellation Failed",
+        description: "Unable to cancel order. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    if (!window.confirm(`⚠️ PERMANENTLY DELETE order #${order.id.slice(0, 8)}?\n\nThis will delete all order items and cannot be undone!`)) {
+      return;
+    }
+
+    if (!supabase) return;
+
+    try {
+      // First delete order items
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', order.id);
+
+      if (itemsError) throw itemsError;
+
+      // Then delete the order
+      const { error: orderError } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', order.id);
+
+      if (orderError) throw orderError;
+
+      toast({
+        title: "Order Deleted! 🗑️",
+        description: `Order #${order.id.slice(0, 8)} has been permanently removed`,
+      });
+
+      // Reload orders
+      const { data: updatedOrders } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            id,
+            order_id,
+            product_id,
+            quantity,
+            price,
+            products (
+              id,
+              title,
+              price,
+              image_url,
+              category
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (updatedOrders) {
+        setOrders(updatedOrders as Order[]);
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Unable to delete order. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Calculate real-time stats from Supabase data
@@ -649,7 +844,7 @@ const AdminDashboard: React.FC = () => {
                           <p className="text-sm text-gray-600">{new Date(order.created_at).toLocaleString()}</p>
                           <p className="text-xs text-gray-500">{order.order_items?.length || 0} items • {order.customer_name || order.customer_email || 'Guest'}</p>
                         </div>
-                        <div className="text-right flex items-center gap-3">
+                        <div className="text-right flex items-center gap-2">
                           <div>
                             <p className="font-bold text-amber-600">₦{order.total_amount.toLocaleString()}</p>
                             <span className={`inline-block px-2 py-1 rounded text-xs ${
@@ -662,14 +857,50 @@ const AdminDashboard: React.FC = () => {
                               {order.status}
                             </span>
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={() => setSelectedOrder(order)}
-                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View Invoice
-                          </Button>
+                          
+                          {/* Super Admin Action Buttons */}
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUpdateOrderStatus(order)}
+                              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                              title="Update Status"
+                            >
+                              <Settings className="w-4 h-4" />
+                            </Button>
+                            
+                            {order.status !== 'cancelled' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCancelOrder(order)}
+                                className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                                title="Cancel Order"
+                              >
+                                <AlertTriangle className="w-4 h-4" />
+                              </Button>
+                            )}
+                            
+                            <Button
+                              size="sm"
+                              onClick={() => setSelectedOrder(order)}
+                              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                              title="View Invoice"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteOrder(order)}
+                              className="border-red-200 text-red-700 hover:bg-red-50"
+                              title="Delete Order"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1342,6 +1573,75 @@ const AdminDashboard: React.FC = () => {
                 <>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Product
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Order Status Update Dialog */}
+      <AlertDialog open={orderStatusDialogOpen} onOpenChange={setOrderStatusDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-blue-600">
+              <Settings className="w-5 h-5" />
+              Update Order Status
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-2">
+                  Order: <span className="font-semibold text-gray-900">#{selectedOrderForUpdate?.id.slice(0, 8)}</span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Customer: <span className="font-semibold text-gray-900">{selectedOrderForUpdate?.customer_name || selectedOrderForUpdate?.customer_email}</span>
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="orderStatus" className="text-sm font-medium text-gray-700">
+                  Select New Status
+                </Label>
+                <select
+                  id="orderStatus"
+                  value={newOrderStatus}
+                  onChange={(e) => setNewOrderStatus(e.target.value as Order['status'])}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isUpdatingOrder}
+                >
+                  <option value="pending">⏳ Pending</option>
+                  <option value="processing">🔄 Processing</option>
+                  <option value="shipped">🚚 Shipped</option>
+                  <option value="delivered">✅ Delivered</option>
+                  <option value="cancelled">❌ Cancelled</option>
+                </select>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-xs text-blue-800">
+                  💡 <strong>Tip:</strong> Customers will see this status update in their order history.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUpdatingOrder}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmOrderStatusUpdate}
+              disabled={isUpdatingOrder}
+              className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-600"
+            >
+              {isUpdatingOrder ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Update Status
                 </>
               )}
             </AlertDialogAction>
