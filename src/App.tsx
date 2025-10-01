@@ -24,6 +24,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProductDetail from "./pages/ProductDetail";
 import Products from "./pages/Products";
 import Profile from "./pages/Profile";
+import Orders from "./pages/Orders";
 import Returns from "./pages/Returns";
 import ShippingInfo from "./pages/ShippingInfo";
 import SizeGuide from "./pages/SizeGuide";
@@ -80,6 +81,7 @@ const App = () => {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/orders" element={<Orders />} />
             <Route path="/liked-items" element={<LikedItems />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/shipping-info" element={<ShippingInfo />} />

@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Textarea } from '../components/ui/textarea';
 import { FileUpload } from '../components/FileUpload';
+import { OrderInvoice } from '../components/OrderInvoice';
 import { supabase } from '../lib/supabase';
 
 interface OrderItem {
@@ -82,6 +83,7 @@ const AdminDashboard: React.FC = () => {
   const [customersLoading, setCustomersLoading] = useState(true);
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<any[]>([]);
   const [subscribersLoading, setSubscribersLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Check admin authentication
   useEffect(() => {
@@ -587,23 +589,33 @@ const AdminDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {orders.slice(0, 10).map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 border border-amber-200 rounded-lg bg-white/50">
-                        <div>
+                      <div key={order.id} className="flex items-center justify-between p-4 border border-amber-200 rounded-lg bg-white/50 hover:bg-white/80 transition-colors">
+                        <div className="flex-1">
                           <p className="font-medium text-gray-800">Order #{order.id.slice(0, 8)}</p>
                           <p className="text-sm text-gray-600">{new Date(order.created_at).toLocaleString()}</p>
-                          <p className="text-xs text-gray-500">{order.order_items?.length || 0} items</p>
+                          <p className="text-xs text-gray-500">{order.order_items?.length || 0} items • {order.customer_name || order.customer_email || 'Guest'}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-amber-600">₦{order.total_amount.toLocaleString()}</p>
-                          <span className={`inline-block px-2 py-1 rounded text-xs ${
-                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                            order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                            order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {order.status}
-                          </span>
+                        <div className="text-right flex items-center gap-3">
+                          <div>
+                            <p className="font-bold text-amber-600">₦{order.total_amount.toLocaleString()}</p>
+                            <span className={`inline-block px-2 py-1 rounded text-xs ${
+                              order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                              order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                              order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                              order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => setSelectedOrder(order)}
+                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View Invoice
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -1230,6 +1242,14 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Order Invoice Modal */}
+      {selectedOrder && (
+        <OrderInvoice 
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)}
+        />
       )}
     </div>
   );

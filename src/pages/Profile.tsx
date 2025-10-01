@@ -215,24 +215,42 @@ const Profile: React.FC = () => {
                 {/* Order History */}
                 <Card className="bg-white/80 backdrop-blur-lg border-amber-200 shadow-xl">
                   <CardHeader>
-                    <CardTitle className="text-gray-800 flex items-center gap-2">
-                      <Package className="w-5 h-5 text-amber-600" />
-                      Recent Orders
+                    <CardTitle className="text-gray-800 flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Package className="w-5 h-5 text-amber-600" />
+                        Recent Orders
+                      </span>
+                      <Button
+                        onClick={() => navigate('/orders')}
+                        size="sm"
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                      >
+                        View All Orders
+                      </Button>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-12">
                       <div className="text-6xl mb-4">📦</div>
-                      <h3 className="text-xl font-semibold text-gray-800 mb-2">No orders yet</h3>
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">Track Your Orders</h3>
                       <p className="text-gray-600 mb-6">
-                        Start shopping to see your order history and track your purchases here!
+                        View order history, download invoices, and track your purchases!
                       </p>
-                      <Button
-                        onClick={() => navigate('/products')}
-                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3"
-                      >
-                        Browse Products
-                      </Button>
+                      <div className="flex gap-4 justify-center">
+                        <Button
+                          onClick={() => navigate('/orders')}
+                          variant="outline"
+                          className="border-amber-200 text-amber-700 hover:bg-amber-50 px-8 py-3"
+                        >
+                          View Orders
+                        </Button>
+                        <Button
+                          onClick={() => navigate('/products')}
+                          className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3"
+                        >
+                          Browse Products
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
