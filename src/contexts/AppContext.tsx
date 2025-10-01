@@ -137,6 +137,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadProducts = useCallback(async () => {
     try {
       setProductsLoading(true);
+      console.log('Loading products from Supabase...');
 
       if (supabase) {
         const { data, error } = await supabase
@@ -151,7 +152,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return;
         }
 
-        if (data && data.length > 0) {
+        console.log('Products loaded from database:', data?.length || 0, 'products');
+        if (data) {
           setProducts(data);
           setProductsLoading(false);
           return;
@@ -159,6 +161,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Fall back to sample data if no Supabase or no data
+      console.log('No Supabase data, loading sample products');
       loadSampleProducts();
     } catch (error) {
       console.error('Error loading products:', error);
@@ -748,15 +751,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log('Product deleted successfully from database');
 
       // Update local state immediately for instant feedback
-      setProducts(prevProducts => prevProducts.filter(p => p.id !== id));
+      setProducts(prevProducts => {
+        const updated = prevProducts.filter(p => p.id !== id);
+        console.log('Updated products list after delete. Old count:', prevProducts.length, 'New count:', updated.length);
+        return updated;
+      });
 
       toast({
         title: "Success",
         description: "Product deleted successfully",
       });
 
-      // Also reload products to ensure consistency
-      await loadProducts();
+      // Wait a bit for state to update, then reload from database
+      setTimeout(async () => {
+        console.log('Reloading products from database after delete...');
+        await loadProducts();
+      }, 500);
+      
       return true;
     } catch (error) {
       console.error('Error deleting product:', error);
