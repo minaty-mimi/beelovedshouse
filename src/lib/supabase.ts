@@ -5,20 +5,21 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 console.log('Supabase Config - URL:', supabaseUrl, 'Key exists:', !!supabaseAnonKey);
 
-// Create Supabase client
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
-);
+// Create Supabase client only if properly configured
+export const supabase = (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('placeholder') && !supabaseAnonKey.includes('placeholder'))
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 console.log('Supabase client created successfully');
 
-// Test the client connection
-supabase.auth.getSession().then(({ data, error }) => {
-  console.log('Supabase client test - session:', !!data.session, 'error:', error);
-}).catch(err => {
-  console.error('Supabase client test failed:', err);
-});
+// Test the client connection if available
+if (supabase) {
+  supabase.auth.getSession().then(({ data, error }) => {
+    console.log('Supabase client test - session:', !!data.session, 'error:', error);
+  }).catch(err => {
+    console.error('Supabase client test failed:', err);
+  });
+}
 
 // Database types
 export interface Database {
